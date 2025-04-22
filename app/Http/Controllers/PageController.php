@@ -12,15 +12,15 @@ class PageController extends Controller
         return view('home'); // Pastikan file view 'home.blade.php' ada di resources/views/
     }
 
-    // Method untuk halaman about
-    public function about()
+    // Method untuk halaman
+    public function cart()
     {
-        return view('about');
+        return view('cart');
     }
 
-    // Method untuk halaman shop
-    public function shop()
+    // Method untuk halaman checkout
+    public function checkout()
     {
-        return view('shop');
+        return view('checkout');
     }
 }
