@@ -36,16 +36,16 @@
 
 <body>
     <!-- Header -->
-    @include('layouts.partials.header')
+    @include('partials.header')
 
     <!-- Konten Utama -->
     @yield('content')
 
     <!-- Footer -->
-    @include('layouts.partials.footer')
+    @include('partials.footer')
 
     <!-- Scripts -->
-    @include('layouts.partials.scripts')
+    @include('partials.scripts')
 </body>
 
 </html>

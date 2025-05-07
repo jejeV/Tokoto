@@ -9,7 +9,7 @@ class PageController extends Controller
     // Method untuk halaman home
     public function home()
     {
-        return view('home'); // Pastikan file view 'home.blade.php' ada di resources/views/
+        return view('home');
     }
 
     // Method untuk halaman

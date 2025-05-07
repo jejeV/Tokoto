@@ -2,30 +2,36 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Admin\DashboardController;
 
-// Halaman Utama
+// Halaman Publik (bisa diakses siapa saja)
 Route::get('/', [PageController::class, 'home'])->name('home');
-
-// Halaman About
 Route::get('/about', [PageController::class, 'about'])->name('about');
-
-// Halaman Shop
 Route::get('/shop', [PageController::class, 'shop'])->name('shop');
-
-// Halaman Single Product
 Route::get('/product/{id}', [PageController::class, 'singleProduct'])->name('single-product');
-
-// Halaman Cart
 Route::get('/cart', [PageController::class, 'cart'])->name('cart');
-
-// Halaman Checkout
 Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
-
-// Halaman Contact
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
-
-// Halaman News
 Route::get('/news', [PageController::class, 'news'])->name('news');
-
-// Halaman 404
 Route::get('/404', [PageController::class, 'notFound'])->name('404');
+
+// Login
+Route::middleware('guest')->group(function () {
+    // Login Basic
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Google
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('login.google');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+});
+
+// Logout
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+//
+Route::middleware(['auth', 'can:admin'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+});
