@@ -2,50 +2,38 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description"
-        content="Responsive Bootstrap4 Shop Template, Created by Imran Hossain from https://imransdesign.com/">
-
-    <!-- title -->
-    <title>Fruitkha - @yield('title')</title>
-
-    <!-- favicon -->
-    <link rel="shortcut icon" type="image/png" href="{{ asset('assets/img/favicon.png') }}">
-    <!-- google font -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Poppins:400,700&display=swap" rel="stylesheet">
-    <!-- fontawesome -->
-    <link rel="stylesheet" href="{{ asset('assets/css/all.min.css') }}">
-    <!-- bootstrap -->
-    <link rel="stylesheet" href="{{ asset('assets/bootstrap/css/bootstrap.min.css') }}">
-    <!-- owl carousel -->
-    <link rel="stylesheet" href="{{ asset('assets/css/owl.carousel.css') }}">
-    <!-- magnific popup -->
-    <link rel="stylesheet" href="{{ asset('assets/css/magnific-popup.css') }}">
-    <!-- animate css -->
-    <link rel="stylesheet" href="{{ asset('assets/css/animate.css') }}">
-    <!-- mean menu css -->
-    <link rel="stylesheet" href="{{ asset('assets/css/meanmenu.min.css') }}">
-    <!-- main style -->
-    <link rel="stylesheet" href="{{ asset('assets/css/main.css') }}">
-    <!-- responsive -->
-    <link rel="stylesheet" href="{{ asset('assets/css/responsive.css') }}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="An impressive and flawless site template that includes various UI elements and countless features, attractive ready-made blocks and rich pages, basically everything you need to create a unique and professional website.">
+  <meta name="keywords" content="bootstrap 5, business, corporate, creative, gulp, marketing, minimal, modern, multipurpose, one page, responsive, saas, sass, seo, startup, html5 template, site template">
+  <meta name="author" content="elemis">
+  <title>Shoesbaru | E-commerce</title>
+  <link rel="shortcut icon" href="{{ asset('assets/home/img/favicon.png') }}">
+  <link rel="stylesheet" href="{{ asset('assets/home/css/plugins.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/home/css/style.css') }}">
+  <link rel="stylesheet" href="{{ asset('assets/home/css/colors/yellow.css') }}">
+  <link rel="preload" href="{{ asset('assets/home/css/fonts/urbanist.css') }}" as="style" onload="this.rel='stylesheet'">
+  @yield('styles')
 </head>
 
-<body>
-    <!-- Header -->
+<body class="onepage">
+  <div class="content-wrapper">
     @include('partials.header')
 
-    <!-- Konten Utama -->
     @yield('content')
+  </div>
+  <!-- /.content-wrapper -->
 
-    <!-- Footer -->
-    @include('partials.footer')
+  @include('partials.footer')
 
-    <!-- Scripts -->
-    @include('partials.scripts')
+  <div class="progress-wrap">
+    <svg class="progress-circle svg-content" width="100%" height="100%" viewBox="-1 -1 102 102">
+      <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
+    </svg>
+  </div>
+  <script src="{{ asset('assets/home/js/plugins.js') }}"></script>
+  <script src="{{ asset('assets/home/js/theme.js') }}"></script>
+  @yield('scripts')
 </body>
 
 </html>

@@ -1,75 +1,71 @@
-<!--PreLoader-->
-<div class="loader">
-    <div class="loader-inner">
-        <div class="circle"></div>
-    </div>
-</div>
-<!--PreLoader Ends-->
-
-<!-- header -->
-<div class="top-header-area" id="sticker">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12 col-sm-12 text-center">
-                <div class="main-menu-wrap">
-                    <!-- logo -->
-                    <div class="site-logo">
-                        <a href="{{ route('home') }}">
-                            <img src="{{ asset('assets/img/logo.png') }}" alt="">
-                        </a>
-                    </div>
-                    <!-- logo -->
-
-                    <!-- menu start -->
-                    <nav class="main-menu">
-                        <ul>
-                            <li class="current-list-item"><a href="#">Home</a>
-                                <ul class="sub-menu">
-                                    <li><a href="{{ route('home') }}">Static Home</a></li>
-                                    <li><a href="{{ route('home') }}">Slider Home</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="{{ route('about') }}">About</a></li>
-                            <li><a href="#">Pages</a>
-                                <ul class="sub-menu">
-                                    <li><a href="{{ route('404') }}">404 page</a></li>
-                                    <li><a href="{{ route('about') }}">About</a></li>
-                                    <li><a href="{{ route('cart') }}">Cart</a></li>
-                                    <li><a href="{{ route('checkout') }}">Check Out</a></li>
-                                    <li><a href="{{ route('contact') }}">Contact</a></li>
-                                    <li><a href="{{ route('news') }}">News</a></li>
-                                    <li><a href="{{ route('shop') }}">Shop</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="{{ route('news') }}">News</a>
-                                <ul class="sub-menu">
-                                    <li><a href="{{ route('news') }}">News</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="{{ route('contact') }}">Contact</a></li>
-                            <li><a href="{{ route('shop') }}">Shop</a>
-                                <ul class="sub-menu">
-                                    <li><a href="{{ route('shop') }}">Shop</a></li>
-                                    <li><a href="{{ route('checkout') }}">Check Out</a></li>
-                                    <li><a href="{{ route('cart') }}">Cart</a></li>
-                                </ul>
-                            </li>
-                            <li>
-                                <div class="header-icons">
-                                    <a class="shopping-cart" href="{{ route('cart') }}"><i
-                                            class="fas fa-shopping-cart"></i></a>
-                                    <a class="mobile-hide search-bar-icon" href="#"><i
-                                            class="fas fa-search"></i></a>
-                                </div>
-                            </li>
-                        </ul>
-                    </nav>
-                    <a class="mobile-show search-bar-icon" href="#"><i class="fas fa-search"></i></a>
-                    <div class="mobile-menu"></div>
-                    <!-- menu end -->
-                </div>
-            </div>
+<header class="wrapper bg-gray">
+  <nav class="navbar navbar-expand-lg extended extended-alt navbar-light navbar-bg-light">
+    <div class="container flex-lg-column">
+      <div class="topbar d-flex flex-row justify-content-lg-center align-items-center">
+        <div class="navbar-brand"><a href="{{ url('/') }}"><img src="{{ asset('assets/home/img/logo-dark.png') }}" srcset="{{ asset('assets/home/img/logo-dark@2x.png') }} 2x" alt="" /></a></div>
+      </div>
+      <!-- /.d-flex -->
+      <div class="navbar-collapse-wrapper bg-white d-flex flex-row align-items-center justify-content-between">
+        <div class="navbar-other w-100 d-none d-lg-block">
+          <nav class="nav social social-muted">
+            <a href="#"><i class="uil uil-twitter"></i></a>
+            <a href="#"><i class="uil uil-facebook-f"></i></a>
+            <a href="#"><i class="uil uil-instagram"></i></a>
+          </nav>
+          <!-- /.social -->
         </div>
+        <!-- /.navbar-other -->
+        <div class="navbar-collapse offcanvas offcanvas-nav offcanvas-start">
+          <div class="offcanvas-header d-lg-none">
+            <h3 class="text-white fs-30 mb-0">Sandbox</h3>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body d-flex flex-column h-100">
+            <ul class="navbar-nav">
+              <li class="nav-item"><a class="nav-link scroll active" href="#home">Home</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="#services">Services</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="#portfolio">Portfolio</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="#testimonials">Testimonials</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="#about">About</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="#pricing">Pricing</a></li>
+            </ul>
+            <!-- /.navbar-nav -->
+            <div class="offcanvas-footer d-lg-none">
+              <div>
+                <a href="mailto:first.last@email.com" class="link-inverse">info@email.com</a>
+                <br /> 00 (123) 456 78 90 <br />
+                <nav class="nav social social-white mt-4">
+                  <a href="#"><i class="uil uil-twitter"></i></a>
+                  <a href="#"><i class="uil uil-facebook-f"></i></a>
+                  <a href="#"><i class="uil uil-dribbble"></i></a>
+                  <a href="#"><i class="uil uil-instagram"></i></a>
+                  <a href="#"><i class="uil uil-youtube"></i></a>
+                </nav>
+                <!-- /.social -->
+              </div>
+            </div>
+            <!-- /.offcanvas-footer -->
+          </div>
+        </div>
+        <!-- /.navbar-collapse -->
+        <div class="navbar-other w-100 d-flex">
+          <ul class="navbar-nav flex-row align-items-center ms-auto">
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvas-info"><i class="uil uil-info-circle"></i></a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#offcanvas-search"><i class="uil uil-search"></i></a></li>
+            <li class="nav-item d-lg-none">
+              <button class="hamburger offcanvas-nav-btn"><span></span></button>
+            </li>
+          </ul>
+          <!-- /.navbar-nav -->
+        </div>
+        <!-- /.navbar-other -->
+      </div>
+      <!-- /.navbar-collapse-wrapper -->
     </div>
-</div>
-<!-- end header -->
+    <!-- /.container -->
+  </nav>
+  <!-- /.navbar -->
+
+  @include('partials.offcanvas')
+</header>
+<!-- /header -->

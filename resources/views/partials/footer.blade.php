@@ -1,70 +1,60 @@
-<!-- footer -->
-<div class="footer-area">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-3 col-md-6">
-                <div class="footer-box about-widget">
-                    <h2 class="widget-title">About us</h2>
-                    <p>Ut enim ad minim veniam perspiciatis unde omnis iste natus error sit voluptatem accusantium
-                        doloremque laudantium, totam rem aperiam, eaque ipsa quae.</p>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="footer-box get-in-touch">
-                    <h2 class="widget-title">Get in Touch</h2>
-                    <ul>
-                        <li>34/8, East Hukupara, Gifirtok, Sadan.</li>
-                        <li>support@fruitkha.com</li>
-                        <li>+00 111 222 3333</li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="footer-box pages">
-                    <h2 class="widget-title">Pages</h2>
-                    <ul>
-                        <li><a href="{{ route('home') }}">Home</a></li>
-                        <li><a href="{{ route('about') }}">About</a></li>
-                        <li><a href="{{ route('shop') }}">Shop</a></li>
-                        <li><a href="{{ route('news') }}">News</a></li>
-                        <li><a href="{{ route('contact') }}">Contact</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <div class="footer-box subscribe">
-                    <h2 class="widget-title">Subscribe</h2>
-                    <p>Subscribe to our mailing list to get the latest updates.</p>
-                    <form action="index.html">
-                        <input type="email" placeholder="Email">
-                        <button type="submit"><i class="fas fa-paper-plane"></i></button>
-                    </form>
-                </div>
-            </div>
+<footer class="bg-gray">
+  <div class="container pt-13 pb-7">
+    <div class="row gx-lg-0 gy-6">
+      <div class="col-lg-4">
+        <div class="widget">
+          <img class="mb-4" src="{{ asset('assets/home/img/logo-dark.png') }}" srcset="{{ asset('assets/home/img/logo-dark@2x.png') }} 2x" alt="" />
+          <p class="lead mb-0">I'm Caitlyn Sandbox, a photographer specializing in food, drink and product photography.</p>
         </div>
-    </div>
-</div>
-<!-- end footer -->
-
-<!-- copyright -->
-<div class="copyright">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-6 col-md-12">
-                <p>Copyrights &copy; 2019 - <a href="https://imransdesign.com/">Imran Hossain</a>, All Rights
-                    Reserved.</p>
+        <!-- /.widget -->
+      </div>
+      <!-- /column -->
+      <div class="col-lg-3 offset-lg-2">
+        <div class="widget">
+          <div class="d-flex flex-row">
+            <div>
+              <div class="icon text-primary fs-28 me-4 mt-n1"> <i class="uil uil-phone-volume"></i> </div>
             </div>
-            <div class="col-lg-6 text-right col-md-12">
-                <div class="social-icons">
-                    <ul>
-                        <li><a href="#" target="_blank"><i class="fab fa-facebook-f"></i></a></li>
-                        <li><a href="#" target="_blank"><i class="fab fa-twitter"></i></a></li>
-                        <li><a href="#" target="_blank"><i class="fab fa-instagram"></i></a></li>
-                        <li><a href="#" target="_blank"><i class="fab fa-linkedin"></i></a></li>
-                        <li><a href="#" target="_blank"><i class="fab fa-dribbble"></i></a></li>
-                    </ul>
-                </div>
+            <div>
+              <h5 class="mb-1">Phone</h5>
+              <p class="mb-0">00 (123) 456 78 90 <br />00 (987) 654 32 10</p>
             </div>
+          </div>
+          <!--/div -->
         </div>
+        <!-- /.widget -->
+      </div>
+      <!-- /column -->
+      <div class="col-lg-3">
+        <div class="widget">
+          <div class="d-flex flex-row">
+            <div>
+              <div class="icon text-primary fs-28 me-4 mt-n1"> <i class="uil uil-location-pin-alt"></i> </div>
+            </div>
+            <div class="align-self-start justify-content-start">
+              <h5 class="mb-1">Address</h5>
+              <address>Moonshine St. 14/05 Light City, London, United Kingdom</address>
+            </div>
+          </div>
+          <!--/div -->
+        </div>
+        <!-- /.widget -->
+      </div>
+      <!-- /column -->
     </div>
-</div>
+    <!--/.row -->
+    <hr class="mt-11 mt-md-12 mb-7" />
+    <div class="d-md-flex align-items-center justify-content-between">
+      <p class="mb-2 mb-lg-0">© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+      <nav class="nav social social-muted mb-0 text-md-end">
+        <a href="#"><i class="uil uil-twitter"></i></a>
+        <a href="#"><i class="uil uil-facebook-f"></i></a>
+        <a href="#"><i class="uil uil-dribbble"></i></a>
+        <a href="#"><i class="uil uil-instagram"></i></a>
+        <a href="#"><i class="uil uil-youtube"></i></a>
+      </nav>
+      <!-- /.social -->
+    </div>
+  </div>
+  <!-- /.container -->
+</footer>
