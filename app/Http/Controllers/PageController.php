@@ -12,15 +12,28 @@ class PageController extends Controller
         return view('home');
     }
 
-    // Method untuk halaman
+    // Method untuk halaman about
+    public function about()
+    {
+        return view('about');
+    }
+
+     // Method untuk halaman about
+    public function shop()
+    {
+        return view('shop');
+    }
+
+     // Method untuk halaman cart
     public function cart()
     {
         return view('cart');
     }
 
-    // Method untuk halaman checkout
+    // // Method untuk halaman checkout
     public function checkout()
     {
         return view('checkout');
     }
+
 }

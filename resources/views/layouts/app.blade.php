@@ -8,7 +8,7 @@
   <meta name="keywords" content="bootstrap 5, business, corporate, creative, gulp, marketing, minimal, modern, multipurpose, one page, responsive, saas, sass, seo, startup, html5 template, site template">
   <meta name="author" content="elemis">
   <title>Shoesbaru | E-commerce</title>
-  <link rel="shortcut icon" href="{{ asset('assets/home/img/favicon.png') }}">
+  <link rel="shortcut icon" href="{{ asset('assets/img/shoes/LOGO SHOEBARU-03.png') }}">
   <link rel="stylesheet" href="{{ asset('assets/home/css/plugins.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/home/css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/home/css/colors/yellow.css') }}">

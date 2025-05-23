@@ -5,7 +5,7 @@
   <meta name="keywords" content="bootstrap 5, business, corporate">
   <meta name="author" content="elemis">
   <title>@yield('title', 'Sandbox - Modern & Multipurpose Bootstrap 5 Template')</title>
-  <link rel="shortcut icon" href="{{ asset('assets/home/img/favicon.png') }}">
+  <link rel="shortcut icon" href="{{ asset('assets/img/shoes/img(3.jpeg)') }}">
 
   <!-- CSS -->
   <link rel="stylesheet" href="{{ asset('assets/home/css/plugins.css') }}">
