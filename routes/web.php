@@ -14,7 +14,6 @@ Route::get('/product/{id}', [PageController::class, 'singleProduct'])->name('sin
 Route::get('/cart', [PageController::class, 'cart'])->name('cart');
 Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
-Route::get('/news', [PageController::class, 'news'])->name('news');
 Route::get('/404', [PageController::class, 'notFound'])->name('404');
 
 // Authentication Routes
@@ -38,4 +37,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // Admin Routes
 Route::middleware(['auth', 'can:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+});
+
+// Test
+Route::get('/collect', function () {
+    return view('collections');
 });

@@ -23,11 +23,10 @@
           <div class="offcanvas-body d-flex flex-column h-100">
             <ul class="navbar-nav">
               <li class="nav-item"><a class="nav-link scroll active" href="#home">Home</a></li>
-              <li class="nav-item"><a class="nav-link scroll" href="#services">Services</a></li>
-              <li class="nav-item"><a class="nav-link scroll" href="#portfolio">Portfolio</a></li>
-              <li class="nav-item"><a class="nav-link scroll" href="#testimonials">Testimonials</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="#services">Shop</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="">Collections</a></li>
               <li class="nav-item"><a class="nav-link scroll" href="#about">About</a></li>
-              <li class="nav-item"><a class="nav-link scroll" href="#pricing">Pricing</a></li>
+              <li class="nav-item"><a class="nav-link scroll" href="#pricing">My Account</a></li>
             </ul>
             <!-- /.navbar-nav -->
             <div class="offcanvas-footer d-lg-none">
@@ -65,7 +64,5 @@
     <!-- /.container -->
   </nav>
   <!-- /.navbar -->
-
-  @include('partials.offcanvas')
 </header>
 <!-- /header -->
