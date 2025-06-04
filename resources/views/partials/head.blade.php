@@ -4,7 +4,7 @@
   <meta name="description" content="An impressive and flawless site template">
   <meta name="keywords" content="bootstrap 5, business, corporate">
   <meta name="author" content="elemis">
-  <title>@yield('title', 'Sandbox - Modern & Multipurpose Bootstrap 5 Template')</title>
+  <title>@yield('title', 'Shoes Baru - Team Four')</title>
   <link rel="shortcut icon" href="{{ asset('assets/home/img/favicon.png') }}">
 
   <!-- CSS -->

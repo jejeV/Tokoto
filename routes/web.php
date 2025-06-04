@@ -2,9 +2,12 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Halaman Publik (bisa diakses siapa saja)
 Route::get('/', [PageController::class, 'home'])->name('home');
@@ -43,3 +46,20 @@ Route::middleware(['auth', 'can:admin'])->prefix('admin')->group(function () {
 Route::get('/collect', function () {
     return view('collections');
 });
+
+Route::get('/collections', [CartController::class, 'showCollections'])->name('collections');
+
+Route::post('/add-to-cart', [CartController::class, 'addToCart'])
+    ->middleware(['auth', 'role:customer']) // Gunakan middleware 'role' atau closure
+    ->name('add.to.cart');
+
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+
+Route::post('/update-cart-quantity', [CartController::class, 'updateCartQuantity'])
+    ->middleware(['auth', 'role:customer'])
+    ->name('cart.update_quantity');
+
+Route::post('/remove-from-cart', [CartController::class, 'removeProduct'])
+    ->middleware(['auth', 'role:customer']) // Saya rekomendasikan ini juga
+    ->name('cart.remove_product');
+
