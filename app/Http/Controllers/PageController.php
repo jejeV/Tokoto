@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 class PageController extends Controller
 {
     // Method untuk halaman home
-    public function home()
+    public function index()
     {
         return view('home');
     }

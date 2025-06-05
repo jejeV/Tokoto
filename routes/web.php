@@ -2,24 +2,43 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Di sini Anda dapat mendaftarkan rute web untuk aplikasi Anda.
+| Rute-rute ini dimuat oleh RouteServiceProvider dalam grup middleware "web"
+| yang berisi middleware grup "web". Buat sesuatu yang hebat!
+|
+*/
 
-// Halaman Publik (bisa diakses siapa saja)
-Route::get('/', [PageController::class, 'home'])->name('home');
+// --- Route Halaman Umum (Public) ---
+// Dapat diakses oleh siapa saja (tamu atau user yang sudah login)
+Route::get('/', [PageController::class, 'index'])->name('home'); // Halaman utama
 Route::get('/about', [PageController::class, 'about'])->name('about');
-Route::get('/shop', [PageController::class, 'shop'])->name('shop');
-Route::get('/product/{id}', [PageController::class, 'singleProduct'])->name('single-product');
-Route::get('/cart', [PageController::class, 'cart'])->name('cart');
-Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/404', [PageController::class, 'notFound'])->name('404');
+Route::get('/collections', [ProductController::class, 'showCollections'])->name('collections'); // Halaman daftar produk
+Route::get('/shop-product/{id}', [ProductController::class, 'showProductDetail'])->name('shop.product.detail'); // Halaman detail produk
 
-// Authentication Routes
+// --- Route Keranjang (Cart) ---
+// Menampilkan Keranjang (GET /cart) - Bisa diakses publik
+// Route yang sebelumnya di PageController@cart dihapus karena duplikasi.
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+// Route Checkout (GET /checkout) - Sementara bisa diakses publik, tapi biasanya memerlukan login/autentikasi
+// Jika 'checkout' adalah halaman statis atau sederhana, PageController bisa.
+// Jika melibatkan data user/order, lebih baik pindahkan ke CheckoutController nantinya.
+Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
+
+
+// --- Route Autentikasi (Guest Middleware) ---
 Route::middleware('guest')->group(function () {
     // Register
     Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
@@ -34,32 +53,32 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 });
 
-// Logout
+// --- Route Logout ---
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Admin Routes
-Route::middleware(['auth', 'can:admin'])->prefix('admin')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+
+// --- Route yang Memerlukan Autentikasi (auth Middleware) ---
+Route::middleware(['auth'])->group(function () {
+    Route::middleware('can:admin')->prefix('admin')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+    });
+
+    // --- Route Cart Actions (Memerlukan auth DAN role customer)
+    Route::post('/cart/add', [CartController::class, 'add'])
+        ->middleware('role:customer') // Hanya customer yang bisa menambah
+        ->name('cart.add'); // Mengubah nama route agar lebih konsisten, dari add.to.cart
+
+    Route::post('/cart/update', [CartController::class, 'update'])
+        ->middleware('role:customer') // Hanya customer yang bisa update
+        ->name('cart.update');
+
+    Route::post('/cart/remove', [CartController::class, 'remove'])
+        ->middleware('role:customer') // Hanya customer yang bisa remove
+        ->name('cart.remove');
+
+    Route::post('/cart/clear', [CartController::class, 'clear'])
+        ->middleware('role:customer') // Hanya customer yang bisa clear
+        ->name('cart.clear');
 });
 
-// Test
-Route::get('/collect', function () {
-    return view('collections');
-});
-
-Route::get('/collections', [CartController::class, 'showCollections'])->name('collections');
-
-Route::post('/add-to-cart', [CartController::class, 'addToCart'])
-    ->middleware(['auth', 'role:customer']) // Gunakan middleware 'role' atau closure
-    ->name('add.to.cart');
-
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-
-Route::post('/update-cart-quantity', [CartController::class, 'updateCartQuantity'])
-    ->middleware(['auth', 'role:customer'])
-    ->name('cart.update_quantity');
-
-Route::post('/remove-from-cart', [CartController::class, 'removeProduct'])
-    ->middleware(['auth', 'role:customer']) // Saya rekomendasikan ini juga
-    ->name('cart.remove_product');
 

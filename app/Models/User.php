@@ -21,10 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'google_id',
-        'avatar',
-        'role',
-        'email_verified_at'
+        'role', // Pastikan kolom 'role' ada di $fillable jika Anda menambahkannya ke DB
     ];
 
     /**
@@ -46,4 +43,16 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Cek apakah user memiliki role tertentu.
+     * Ini mengasumsikan Anda memiliki kolom 'role' di tabel 'users' Anda.
+     *
+     * @param string $role
+     * @return bool
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
 }

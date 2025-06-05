@@ -2,9 +2,13 @@
     <nav class="navbar navbar-expand-lg extended extended-alt navbar-light navbar-bg-light">
         <div class="container flex-lg-column">
             <div class="topbar d-flex flex-row justify-content-lg-center align-items-center">
-                <div class="navbar-brand"><a href="{{ url('/') }}"><img
-                            src="{{ asset('assets/home/img/logo-dark.png') }}"
-                            srcset="{{ asset('assets/home/img/logo-dark@2x.png') }} 2x" alt="" /></a></div>
+                <div class="navbar-brand">
+                    {{-- Home link remains as is --}}
+                    <a href="{{ url('/') }}">
+                        <img src="{{ asset('assets/home/img/logo-dark.png') }}"
+                            srcset="{{ asset('assets/home/img/logo-dark@2x.png') }} 2x" alt="" />
+                    </a>
+                </div>
             </div>
             <div class="navbar-collapse-wrapper bg-white d-flex flex-row align-items-center justify-content-between">
                 <div class="navbar-other w-100 d-none d-lg-block">
@@ -22,32 +26,18 @@
                     </div>
                     <div class="offcanvas-body d-flex flex-column h-100">
                         <ul class="navbar-nav">
-                            <li class="nav-item"><a class="nav-link scroll active" href="#home">Home</a></li>
-                            <li class="nav-item"><a class="nav-link scroll" href="#services">Shop</a></li>
-                            <li class="nav-item"><a class="nav-link scroll"href="{{ url('/collections') }}">Collections</a></li>
-                            <li class="nav-item"><a class="nav-link scroll" href="#about">About</a></li>
-                            @guest
-                            <li class="nav-item dropdown">
-                                <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button"
-                                    data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                    {{ Auth::user()->name }}
-                                </a>
-
-                                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                    <a class="dropdown-item" href="{{ url('/dashboard') }}">
-                                        Dashboard
-                                    </a>
-                                    <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
-                                  document.getElementById('logout-form').submit();">
-                                        Logout
-                                    </a>
-
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </div>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('home') ? 'active' : '' }}" href="{{ route('home') }}">Home</a>
                             </li>
-                            @endguest
+                            <li class="nav-item">
+                                <a class="nav-link scroll" href="#services">Shop</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('collections') ? 'active' : '' }}" href="{{ route('collections') }}">Collections</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">About</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -55,24 +45,24 @@
                     <ul class="navbar-nav flex-row align-items-center ms-auto">
                         @guest
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login') }}" title="Login">
+                            <a class="nav-link {{ request()->routeIs('login') ? 'active' : '' }}" href="{{ route('login') }}" title="Login">
                                 <i class="uil uil-signin"></i>
                             </a>
                         </li>
                         @else
                         <li class="nav-item dropdown">
-                            <a id="navbarDropdownUser" class="nav-link dropdown-toggle" href="#" role="button"
+                            <a id="navbarDropdownUser" class="nav-link dropdown-toggle {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}" href="#" role="button"
                                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                 <i class="uil uil-user-circle"></i> <span
                                     class="d-none d-md-inline">{{ Auth::user()->name }}</span>
                             </a>
 
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-                                <a class="dropdown-item" href="{{ url('/dashboard') }}">
+                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
                                     Dashboard
                                 </a>
                                 <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault();
-                            document.getElementById('logout-form-other').submit();">
+                                document.getElementById('logout-form-other').submit();">
                                     Logout
                                 </a>
 
@@ -83,11 +73,14 @@
                             </div>
                         </li>
                         @endguest
-                        <li class="nav-item"><a class="nav-link" data-bs-toggle="offcanvas"
-                                data-bs-target="#offcanvas-search"><i class="uil uil-shopping-cart"></i></a></li>
-
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('cart.index') ? 'active' : '' }}" href="{{ route('cart.index') }}">
+                                <i class="uil uil-shopping-cart"></i>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
+        </div>
     </nav>
 </header>

@@ -8,7 +8,7 @@
         <div class="row align-items-center mb-10 position-relative zindex-1">
             <div class="col-md-8 col-lg-9 col-xl-8 col-xxl-7 pe-xl-20">
                 <h2 class="display-6">New Arrivals</h2>
-                <nav class="d-inline-block" aria-label="breadcrumb">    
+                <nav class="d-inline-block" aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="{{ url('/') }}">Home</a></li>
                         <li class="breadcrumb-item active" aria-current="page">Shop</li>
@@ -29,37 +29,44 @@
         </div>
         <div class="grid grid-view projects-masonry shop mb-13">
             <div class="row gx-md-8 gy-10 gy-md-13 isotope">
-                {{-- Menggunakan @forelse untuk mengulang produk dari database --}}
                 @forelse ($products as $product)
                     <div class="project item col-md-6 col-xl-4">
                         <figure class="rounded mb-6">
                             <img src="{{ asset('assets/home/img/photos/' . $product->image) }}" srcset="{{ asset('assets/home/img/photos/' . $product->image) }} 2x" alt="{{ $product->name }}" />
-
                             <a class="item-like" href="#" data-bs-toggle="white-tooltip" title="Add to wishlist"><i class="uil uil-heart"></i></a>
                             <a class="item-view" href="#" data-bs-toggle="white-tooltip" title="Quick view"><i class="uil uil-eye"></i></a>
-
-                            <form action="{{ route('add.to.cart') }}" method="POST" class="add-to-cart-form" style="display:inline;">
+                            <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form" style="display:inline;">
                                 @csrf
                                 <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                {{-- Input ini tidak lagi sepenuhnya diperlukan jika CartController@add mengambil data dari DB berdasarkan product_id
+                                     Namun, tidak ada salahnya ada, hanya memastikan data ini konsisten dengan DB
                                 <input type="hidden" name="product_name" value="{{ $product->name }}">
                                 <input type="hidden" name="price" value="{{ $product->price }}">
-                                <input type="hidden" name="image" value="{{ $product->image }}"> {{-- Nama file gambar saja --}}
-                                <input type="hidden" name="stock" value="{{ $product->stock ?? 0 }}"> {{-- Pastikan nilai stock terkirim --}}
+                                <input type="hidden" name="image" value="{{ $product->image }}">
+                                <input type="hidden" name="stock" value="{{ $product->stock ?? 0 }}">
+                                --}}
 
                                 @guest
                                     <button type="button" class="item-cart border-0 p-0 bg-transparent text-primary"
-                                            onclick="window.location='{{ route('login') }}';"
-                                            title="Anda perlu login untuk menambahkan ke keranjang">
+                                        onclick="window.location='{{ route('login') }}';"
+                                        title="Anda perlu login untuk menambahkan ke keranjang">
                                         <i class="uil uil-signin"></i> Login to Add
                                     </button>
                                 @else
-                                    @if (($product->stock ?? 0) > 0)
-                                        <button type="submit" class="item-cart">
-                                            <i class="uil uil-shopping-bag"></i> Add to Cart
-                                        </button>
+                                    @if(Auth::check() && Auth::user()->hasRole('customer'))
+                                        @if (($product->stock ?? 0) > 0)
+                                            <button type="submit" class="item-cart">
+                                                <i class="uil uil-shopping-bag"></i> Add to Cart
+                                            </button>
+                                        @else
+                                            <button type="button" class="item-cart border-0 p-0 bg-transparent text-secondary" disabled>
+                                                <i class="uil uil-ban"></i> Sold Out
+                                            </button>
+                                        @endif
                                     @else
-                                        <button type="button" class="item-cart border-0 p-0 bg-transparent text-secondary" disabled>
-                                            <i class="uil uil-ban"></i> Sold Out
+                                        <button type="button" class="item-cart border-0 p-0 bg-transparent text-secondary" disabled
+                                            title="Anda tidak memiliki izin untuk menambahkan ke keranjang.">
+                                            <i class="uil uil-exclamation-circle"></i> No Permission
                                         </button>
                                     @endif
                                 @endguest
@@ -78,7 +85,7 @@
                                 </div>
                                 <span class="ratings five"></span>
                             </div>
-                            <h2 class="post-title h3 fs-22"><a href="{{ url('/shop-product/' . $product->id) }}" class="link-dark">{{ $product->name }}</a></h2>
+                            <h2 class="post-title h3 fs-22"><a href="{{ route('shop.product.detail', $product->id) }}" class="link-dark">{{ $product->name }}</a></h2>
                             <p class="price"><span class="amount">${{ number_format($product->price, 2) }}</span></p>
                         </div>
                     </div>
