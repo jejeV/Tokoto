@@ -20,7 +20,6 @@ use App\Http\Controllers\Admin\DashboardController;
 */
 
 // --- Route Halaman Umum (Public) ---
-// Dapat diakses oleh siapa saja (tamu atau user yang sudah login)
 Route::get('/', [PageController::class, 'index'])->name('home'); // Halaman utama
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
@@ -29,12 +28,7 @@ Route::get('/collections', [ProductController::class, 'showCollections'])->name(
 Route::get('/shop-product/{id}', [ProductController::class, 'showProductDetail'])->name('shop.product.detail'); // Halaman detail produk
 
 // --- Route Keranjang (Cart) ---
-// Menampilkan Keranjang (GET /cart) - Bisa diakses publik
-// Route yang sebelumnya di PageController@cart dihapus karena duplikasi.
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-// Route Checkout (GET /checkout) - Sementara bisa diakses publik, tapi biasanya memerlukan login/autentikasi
-// Jika 'checkout' adalah halaman statis atau sederhana, PageController bisa.
-// Jika melibatkan data user/order, lebih baik pindahkan ke CheckoutController nantinya.
 Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
 
 
