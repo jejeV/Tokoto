@@ -1,17 +1,21 @@
-
 <?php
-// database/migrations/2014_10_12_000000_create_users_table.php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name'); // Standar Laravel, pertahankan ini.
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();
@@ -19,15 +23,17 @@ return new class extends Migration
             $table->string('avatar')->nullable();
             $table->enum('role', ['admin', 'customer'])->default('customer');
             $table->rememberToken();
-            $table->string('address_line_1')->nullable();
-            $table->string('address_line_2')->nullable();
-            $table->unsignedBigInteger('city_id')->nullable();
-            $table->unsignedBigInteger('province_id')->nullable();
-            $table->string('zip_code', 10)->nullable();
-            $table->string('phone_number', 20)->nullable();
+
+            // Kolom alamat akan ditambahkan di migrasi terpisah (add_address_fields_and_fks_to_users_table)
+            // Jadi, jangan tambahkan foreignId() ke provinces/cities di sini.
+
             $table->timestamps();
         });
     }
+
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('users');

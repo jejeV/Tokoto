@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Middleware\VerifyCsrfToken;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,20 +21,16 @@ use App\Http\Controllers\Admin\DashboardController;
 |
 */
 
-// --- Route Halaman Umum (Public) ---
-Route::get('/', [PageController::class, 'index'])->name('home'); // Halaman utama
+// Public Routes (Accessible by anyone)
+Route::get('/', [PageController::class, 'index'])->name('home');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/404', [PageController::class, 'notFound'])->name('404');
-Route::get('/collections', [ProductController::class, 'showCollections'])->name('collections'); // Halaman daftar produk
-Route::get('/shop-product/{id}', [ProductController::class, 'showProductDetail'])->name('shop.product.detail'); // Halaman detail produk
+Route::get('/collections', [ProductController::class, 'showCollections'])->name('collections');
+Route::get('/shop-product/{id}', [ProductController::class, 'showProductDetail'])->name('shop.product.detail');
 
-// --- Route Keranjang (Cart) ---
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::get('/checkout', [PageController::class, 'checkout'])->name('checkout');
+Route::get('/api/cities/{provinceId}', [CheckoutController::class, 'getCitiesByProvince'])->name('api.cities');
 
-
-// --- Route Autentikasi (Guest Middleware) ---
 Route::middleware('guest')->group(function () {
     // Register
     Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
@@ -47,32 +45,43 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 });
 
-// --- Route Logout ---
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
-// --- Route yang Memerlukan Autentikasi (auth Middleware) ---
-Route::middleware(['auth'])->group(function () {
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('add', [CartController::class, 'add'])->name('add');
+    Route::put('{cartItem}/update-quantity', [CartController::class, 'updateQuantity'])->name('update_quantity');
+    Route::put('{cartItem}/update-variant', [CartController::class, 'updateVariant'])->name('update_variant');
+    Route::delete('{cartItem}', [CartController::class, 'remove'])->name('remove');
+    Route::post('clear', [CartController::class, 'clear'])->name('clear');
+});
+
+
+// Authenticated User Routes
+Route::middleware('auth')->group(function () {
+
     Route::middleware('can:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     });
 
-    // --- Route Cart Actions (Memerlukan auth DAN role customer)
-    Route::post('/cart/add', [CartController::class, 'add'])
-        ->middleware('role:customer') // Hanya customer yang bisa menambah
-        ->name('cart.add'); // Mengubah nama route agar lebih konsisten, dari add.to.cart
+    Route::middleware('role:customer')->group(function () {
+        // Checkout Routes
+        Route::get('/checkout', [CheckoutController::class, 'showCheckout'])->name('checkout.show');
+        Route::post('/checkout/process', [CheckoutController::class, 'processCheckout'])->name('checkout.process');
 
-    Route::post('/cart/update', [CartController::class, 'update'])
-        ->middleware('role:customer') // Hanya customer yang bisa update
-        ->name('cart.update');
+        // Order Routes
+        Route::get('/orders', [CheckoutController::class, 'listOrders'])->name('orders.index');
+        Route::get('/orders/{orderCode}', [CheckoutController::class, 'showOrder'])->name('order.detail');
+    });
 
-    Route::post('/cart/remove', [CartController::class, 'remove'])
-        ->middleware('role:customer') // Hanya customer yang bisa remove
-        ->name('cart.remove');
-
-    Route::post('/cart/clear', [CartController::class, 'clear'])
-        ->middleware('role:customer') // Hanya customer yang bisa clear
-        ->name('cart.clear');
+    // Misalnya: Route::get('/profile', [UserController::class, 'showProfile'])->name('profile');
 });
 
+Route::post('/payment/callback', [CheckoutController::class, 'handleCallback'])
+    ->withoutMiddleware([VerifyCsrfToken::class])
+    ->name('payment.callback');
 
+Route::get('/checkout/success', [CheckoutController::class, 'checkoutSuccess'])->name('checkout.success');
+Route::get('/checkout/pending', [CheckoutController::class, 'checkoutPending'])->name('checkout.pending');
+Route::get('/checkout/error', [CheckoutController::class, 'checkoutError'])->name('checkout.error');

@@ -30,21 +30,31 @@
         <div class="grid grid-view projects-masonry shop mb-13">
             <div class="row gx-md-8 gy-10 gy-md-13 isotope">
                 @forelse ($products as $product)
+                    {{-- Dapatkan varian default (misalnya, varian pertama) --}}
+                    @php
+                        $defaultVariant = $product->productVariants->first();
+                        $totalProductStock = $product->productVariants->sum('stock'); // Total stok dari semua varian
+                    @endphp
+
                     <div class="project item col-md-6 col-xl-4">
                         <figure class="rounded mb-6">
-                            <img src="{{ asset('assets/home/img/photos/' . $product->image) }}" srcset="{{ asset('assets/home/img/photos/' . $product->image) }} 2x" alt="{{ $product->name }}" />
+                            {{-- Gunakan gambar dari varian default, fallback ke gambar produk utama jika tidak ada --}}
+                            <img src="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }}"
+                                 srcset="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }} 2x"
+                                 alt="{{ $product->name }}" />
+
                             <a class="item-like" href="#" data-bs-toggle="white-tooltip" title="Add to wishlist"><i class="uil uil-heart"></i></a>
                             <a class="item-view" href="#" data-bs-toggle="white-tooltip" title="Quick view"><i class="uil uil-eye"></i></a>
+
                             <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form" style="display:inline;">
                                 @csrf
                                 <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                {{-- Input ini tidak lagi sepenuhnya diperlukan jika CartController@add mengambil data dari DB berdasarkan product_id
-                                     Namun, tidak ada salahnya ada, hanya memastikan data ini konsisten dengan DB
-                                <input type="hidden" name="product_name" value="{{ $product->name }}">
-                                <input type="hidden" name="price" value="{{ $product->price }}">
-                                <input type="hidden" name="image" value="{{ $product->image }}">
-                                <input type="hidden" name="stock" value="{{ $product->stock ?? 0 }}">
-                                --}}
+                                {{-- Jika ada varian default, kirim size dan color slug dari varian tersebut --}}
+                                @if($defaultVariant)
+                                    <input type="hidden" name="size" value="{{ Str::slug($defaultVariant->size->name ?? '') }}">
+                                    <input type="hidden" name="color" value="{{ Str::slug($defaultVariant->color->name ?? '') }}">
+                                @endif
+                                <input type="hidden" name="quantity" value="1"> {{-- Kuantitas default 1 --}}
 
                                 @guest
                                     <button type="button" class="item-cart border-0 p-0 bg-transparent text-primary"
@@ -54,7 +64,8 @@
                                     </button>
                                 @else
                                     @if(Auth::check() && Auth::user()->hasRole('customer'))
-                                        @if (($product->stock ?? 0) > 0)
+                                        {{-- Cek total stok dari semua varian --}}
+                                        @if ($totalProductStock > 0)
                                             <button type="submit" class="item-cart">
                                                 <i class="uil uil-shopping-bag"></i> Add to Cart
                                             </button>
@@ -72,21 +83,24 @@
                                 @endguest
                             </form>
 
-                            @if (($product->stock ?? 0) == 0)
+                            {{-- Tampilkan badge "Sold Out!" atau "Sale!" berdasarkan total stok dan harga varian default --}}
+                            @if ($totalProductStock == 0)
                                 <span class="avatar bg-red text-white w-10 h-10 position-absolute text-uppercase fs-13" style="top: 1rem; left: 1rem;"><span>Sold Out!</span></span>
-                            @elseif ($product->price < 50)
+                            @elseif (($defaultVariant->price ?? $product->price) < 100000 && ($defaultVariant->price ?? $product->price) > 0) {{-- Asumsi "Sale" jika harga di bawah 100k dan lebih dari 0 --}}
                                 <span class="avatar bg-pink text-white w-10 h-10 position-absolute text-uppercase fs-13" style="top: 1rem; left: 1rem;"><span>Sale!</span></span>
                             @endif
                         </figure>
                         <div class="post-header">
                             <div class="d-flex flex-row align-items-center justify-content-between mb-2">
                                 <div class="post-category text-ash mb-0">
-                                    {{ $product->category ?? 'Category Placeholder' }}
+                                    {{-- Jika tidak ada kategori, tampilkan placeholder --}}
+                                    {{ $product->category->name ?? 'Category Placeholder' }}
                                 </div>
                                 <span class="ratings five"></span>
                             </div>
                             <h2 class="post-title h3 fs-22"><a href="{{ route('shop.product.detail', $product->id) }}" class="link-dark">{{ $product->name }}</a></h2>
-                            <p class="price"><span class="amount">${{ number_format($product->price, 2) }}</span></p>
+                            {{-- Tampilkan harga dari varian default, fallback ke harga produk jika tidak ada varian --}}
+                            <p class="price"><span class="amount">Rp{{ number_format($defaultVariant->price ?? $product->price, 0, ',', '.') }}</span></p>
                         </div>
                     </div>
                 @empty
@@ -116,6 +130,7 @@
     </div>
 </section>
 
+{{-- Modal Sukses/Error Add to Cart, tetap menggunakan JS --}}
 <div class="modal fade" id="addToCartSuccessModal" tabindex="-1" aria-labelledby="addToCartSuccessModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content text-center">
@@ -131,7 +146,6 @@
         </div>
     </div>
 </div>
-{{-- END MODAL --}}
 
 @endsection
 
@@ -152,7 +166,6 @@
 
             const imgElement = document.getElementById('modalProductImage');
             if (productImage) {
-                // JALUR GAMBAR DI JS JUGA DISESUAIKAN
                 imgElement.src = '{{ asset('assets/home/img/photos/') }}/' + productImage;
                 imgElement.style.display = 'block';
             } else {

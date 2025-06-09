@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Address;
+use App\Models\City;
+use App\Models\Province;
+use App\Models\Order;
 
 class User extends Authenticatable
 {
@@ -21,7 +25,17 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role', // Pastikan kolom 'role' ada di $fillable jika Anda menambahkannya ke DB
+        'role',
+        'google_id',
+        'avatar',
+        'address_line_1',
+        'address_line_2',
+        'city_id',
+        'province_id',
+        'zip_code',
+        'phone_number',
+        'first_name',
+        'last_name',  
     ];
 
     /**
@@ -46,13 +60,41 @@ class User extends Authenticatable
 
     /**
      * Cek apakah user memiliki role tertentu.
-     * Ini mengasumsikan Anda memiliki kolom 'role' di tabel 'users' Anda.
-     *
-     * @param string $role
-     * @return bool
      */
     public function hasRole(string $role): bool
     {
         return $this->role === $role;
+    }
+
+    /**
+     * Relasi ke model City (untuk alamat utama user jika disimpan di tabel users).
+     */
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    /**
+     * Relasi ke model Province (untuk alamat utama user jika disimpan di tabel users).
+     */
+    public function province()
+    {
+        return $this->belongsTo(Province::class);
+    }
+
+    /**
+     * Relasi ke model Order.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Mendefinisikan relasi: satu User memiliki banyak Address tersimpan.
+     */
+    public function addresses()
+    {
+        return $this->hasMany(Address::class);
     }
 }
