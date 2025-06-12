@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
-use App\Models\Cart; // Pastikan ini ada dan mengarah ke model Cart Anda
+use App\Models\Cart;
 use App\Models\ProductVariant;
 use App\Models\Size;
 use App\Models\Color;
@@ -497,18 +497,17 @@ class CartController extends Controller
                 ->get(); // Ini mengembalikan Koleksi model Cart
 
             $cartTotal = $cartItems->sum(function($item) {
-                // $item di sini adalah model Cart, jadi $item->quantity dan $item->price benar.
                 return $item->quantity * $item->price;
             });
 
             return [
-                'cartItems' => $cartItems, // Mengembalikan koleksi Eloquent secara langsung
+                'cartItems' => $cartItems,
                 'cartTotal' => $cartTotal
             ];
         } catch (\Exception $e) {
             Log::error('Error fetching cart for checkout: ' . $e->getMessage());
             return [
-                'cartItems' => collect(), // Mengembalikan koleksi kosong saat error
+                'cartItems' => collect(),
                 'cartTotal' => 0,
                 'error' => 'Gagal mengambil data keranjang. Silakan coba lagi nanti.'
             ];

@@ -59,7 +59,7 @@
                                             srcset="{{ asset('assets/home/img/photos/' . $variant->image) }} 2x"
                                             alt="{{ $product->name }} - {{ $variant->color->name ?? '' }} {{ $variant->size->name ?? '' }}" />
                                         <a class="item-link"
-                                            href="{{ asset('assets/home/img/photos/' . $variant->image) }}"
+                                        href="{{ asset('assets/home/img/photos/' . $variant->image) }}"
                                             data-glightbox data-gallery="product-group"><i
                                                 class="uil uil-focus-add"></i></a>
                                     </figure>

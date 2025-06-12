@@ -13,9 +13,9 @@ class PageController extends Controller
     }
 
     // Method untuk halaman
-    public function cart()
+    public function process()
     {
-        return view('cart');
+        return view('process');
     }
 
     // Method untuk halaman checkout

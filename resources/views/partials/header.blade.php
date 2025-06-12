@@ -3,7 +3,6 @@
         <div class="container flex-lg-column">
             <div class="topbar d-flex flex-row justify-content-lg-center align-items-center">
                 <div class="navbar-brand">
-                    {{-- Home link remains as is --}}
                     <a href="{{ url('/') }}">
                         <img src="{{ asset('assets/home/img/logo-dark.png') }}"
                             srcset="{{ asset('assets/home/img/logo-dark@2x.png') }} 2x" alt="" />
@@ -34,10 +33,10 @@
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('collections') ? 'active' : '' }}" href="{{ route('collections') }}">Collections</a>
-                            </li>
+                            {{-- </li>
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->routeIs('about') ? 'active' : '' }}" href="{{ route('about') }}">About</a>
-                            </li>
+                            </li> --}}
                         </ul>
                     </div>
                 </div>

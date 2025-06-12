@@ -33,57 +33,15 @@
                     {{-- Dapatkan varian default (misalnya, varian pertama) --}}
                     @php
                         $defaultVariant = $product->productVariants->first();
-                        $totalProductStock = $product->productVariants->sum('stock'); // Total stok dari semua varian
+                        $totalProductStock = $product->productVariants->sum('stock');
                     @endphp
 
                     <div class="project item col-md-6 col-xl-4">
                         <figure class="rounded mb-6">
-                            {{-- Gunakan gambar dari varian default, fallback ke gambar produk utama jika tidak ada --}}
                             <img src="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }}"
                                  srcset="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }} 2x"
                                  alt="{{ $product->name }}" />
 
-                            <a class="item-like" href="#" data-bs-toggle="white-tooltip" title="Add to wishlist"><i class="uil uil-heart"></i></a>
-                            <a class="item-view" href="#" data-bs-toggle="white-tooltip" title="Quick view"><i class="uil uil-eye"></i></a>
-
-                            <form action="{{ route('cart.add') }}" method="POST" class="add-to-cart-form" style="display:inline;">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                {{-- Jika ada varian default, kirim size dan color slug dari varian tersebut --}}
-                                @if($defaultVariant)
-                                    <input type="hidden" name="size" value="{{ Str::slug($defaultVariant->size->name ?? '') }}">
-                                    <input type="hidden" name="color" value="{{ Str::slug($defaultVariant->color->name ?? '') }}">
-                                @endif
-                                <input type="hidden" name="quantity" value="1"> {{-- Kuantitas default 1 --}}
-
-                                @guest
-                                    <button type="button" class="item-cart border-0 p-0 bg-transparent text-primary"
-                                        onclick="window.location='{{ route('login') }}';"
-                                        title="Anda perlu login untuk menambahkan ke keranjang">
-                                        <i class="uil uil-signin"></i> Login to Add
-                                    </button>
-                                @else
-                                    @if(Auth::check() && Auth::user()->hasRole('customer'))
-                                        {{-- Cek total stok dari semua varian --}}
-                                        @if ($totalProductStock > 0)
-                                            <button type="submit" class="item-cart">
-                                                <i class="uil uil-shopping-bag"></i> Add to Cart
-                                            </button>
-                                        @else
-                                            <button type="button" class="item-cart border-0 p-0 bg-transparent text-secondary" disabled>
-                                                <i class="uil uil-ban"></i> Sold Out
-                                            </button>
-                                        @endif
-                                    @else
-                                        <button type="button" class="item-cart border-0 p-0 bg-transparent text-secondary" disabled
-                                            title="Anda tidak memiliki izin untuk menambahkan ke keranjang.">
-                                            <i class="uil uil-exclamation-circle"></i> No Permission
-                                        </button>
-                                    @endif
-                                @endguest
-                            </form>
-
-                            {{-- Tampilkan badge "Sold Out!" atau "Sale!" berdasarkan total stok dan harga varian default --}}
                             @if ($totalProductStock == 0)
                                 <span class="avatar bg-red text-white w-10 h-10 position-absolute text-uppercase fs-13" style="top: 1rem; left: 1rem;"><span>Sold Out!</span></span>
                             @elseif (($defaultVariant->price ?? $product->price) < 100000 && ($defaultVariant->price ?? $product->price) > 0) {{-- Asumsi "Sale" jika harga di bawah 100k dan lebih dari 0 --}}
@@ -93,13 +51,11 @@
                         <div class="post-header">
                             <div class="d-flex flex-row align-items-center justify-content-between mb-2">
                                 <div class="post-category text-ash mb-0">
-                                    {{-- Jika tidak ada kategori, tampilkan placeholder --}}
                                     {{ $product->category->name ?? 'Category Placeholder' }}
                                 </div>
                                 <span class="ratings five"></span>
                             </div>
                             <h2 class="post-title h3 fs-22"><a href="{{ route('shop.product.detail', $product->id) }}" class="link-dark">{{ $product->name }}</a></h2>
-                            {{-- Tampilkan harga dari varian default, fallback ke harga produk jika tidak ada varian --}}
                             <p class="price"><span class="amount">Rp{{ number_format($defaultVariant->price ?? $product->price, 0, ',', '.') }}</span></p>
                         </div>
                     </div>

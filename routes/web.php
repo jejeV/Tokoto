@@ -8,45 +8,23 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Middleware\VerifyCsrfToken;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 |
-| Di sini Anda dapat mendaftarkan rute web untuk aplikasi Anda.
-| Rute-rute ini dimuat oleh RouteServiceProvider dalam grup middleware "web"
-| yang berisi middleware grup "web". Buat sesuatu yang hebat!
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "web" middleware group. Make something great!
 |
 */
 
-// Public Routes (Accessible by anyone)
 Route::get('/', [PageController::class, 'index'])->name('home');
-Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::get('/process', [PageController::class, 'process'])->name('process');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
-Route::get('/404', [PageController::class, 'notFound'])->name('404');
 Route::get('/collections', [ProductController::class, 'showCollections'])->name('collections');
 Route::get('/shop-product/{id}', [ProductController::class, 'showProductDetail'])->name('shop.product.detail');
-
-Route::get('/api/cities/{provinceId}', [CheckoutController::class, 'getCitiesByProvince'])->name('api.cities');
-
-Route::middleware('guest')->group(function () {
-    // Register
-    Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-
-    // Login Basic
-    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-
-    // Google OAuth
-    Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('login.google');
-    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
-});
-
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
 
 Route::prefix('cart')->name('cart.')->group(function () {
     Route::get('/', [CartController::class, 'index'])->name('index');
@@ -55,33 +33,43 @@ Route::prefix('cart')->name('cart.')->group(function () {
     Route::put('{cartItem}/update-variant', [CartController::class, 'updateVariant'])->name('update_variant');
     Route::delete('{cartItem}', [CartController::class, 'remove'])->name('remove');
     Route::post('clear', [CartController::class, 'clear'])->name('clear');
+    Route::get('/cart-count', [CartController::class, 'getCartCount'])->name('count');
+    Route::post('/cart/validate', [CartController::class, 'validateCart'])->name('validate');
 });
 
+Route::middleware('guest')->group(function () {
+    Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
 
-// Authenticated User Routes
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('login.google');
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+});
+
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
 Route::middleware('auth')->group(function () {
-
     Route::middleware('can:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     });
 
-    Route::middleware('role:customer')->group(function () {
-        // Checkout Routes
-        Route::get('/checkout', [CheckoutController::class, 'showCheckout'])->name('checkout.show');
-        Route::post('/checkout/process', [CheckoutController::class, 'processCheckout'])->name('checkout.process');
-
-        // Order Routes
-        Route::get('/orders', [CheckoutController::class, 'listOrders'])->name('orders.index');
-        Route::get('/orders/{orderCode}', [CheckoutController::class, 'showOrder'])->name('order.detail');
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/', [CheckoutController::class, 'showCheckoutForm'])->name('show');
+        Route::post('/process', [CheckoutController::class, 'process'])->name('process');
+        Route::get('/success', [CheckoutController::class, 'success'])->name('success');
+        Route::get('/pending', [CheckoutController::class, 'pending'])->name('pending');
+        Route::get('/error', [CheckoutController::class, 'error'])->name('error');
     });
 
-    // Misalnya: Route::get('/profile', [UserController::class, 'showProfile'])->name('profile');
+    Route::prefix('orders')->name('orders.')->group(function () {
+        Route::get('/', [CheckoutController::class, 'listOrders'])->name('index');
+        Route::get('/{order}', [CheckoutController::class, 'showOrder'])->name('show');
+    });
 });
 
-Route::post('/payment/callback', [CheckoutController::class, 'handleCallback'])
-    ->withoutMiddleware([VerifyCsrfToken::class])
-    ->name('payment.callback');
+Route::post('/midtrans-callback', [CheckoutController::class, 'midtransCallback'])
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
+    ->name('midtrans.callback');
 
-Route::get('/checkout/success', [CheckoutController::class, 'checkoutSuccess'])->name('checkout.success');
-Route::get('/checkout/pending', [CheckoutController::class, 'checkoutPending'])->name('checkout.pending');
-Route::get('/checkout/error', [CheckoutController::class, 'checkoutError'])->name('checkout.error');

@@ -22,8 +22,6 @@
 
     @yield('content')
   </div>
-  <!-- /.content-wrapper -->
-
   @include('partials.footer')
 
   <div class="progress-wrap">
@@ -31,9 +29,11 @@
       <path d="M50,1 a49,49 0 0,1 0,98 a49,49 0 0,1 0,-98" />
     </svg>
   </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="{{ asset('assets/home/js/plugins.js') }}"></script>
   <script src="{{ asset('assets/home/js/theme.js') }}"></script>
-  @yield('scripts')
+  @stack('scripts')
 </body>
 
 </html>

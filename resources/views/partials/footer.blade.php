@@ -17,7 +17,7 @@
             </div>
             <div>
               <h5 class="mb-1">Phone</h5>
-              <p class="mb-0">00 (123) 456 78 90 <br />00 (987) 654 32 10</p>
+              <p class="mb-0">(021)  1234567810</p>
             </div>
           </div>
           <!--/div -->
@@ -33,7 +33,7 @@
             </div>
             <div class="align-self-start justify-content-start">
               <h5 class="mb-1">Address</h5>
-              <address>Moonshine St. 14/05 Light City, London, United Kingdom</address>
+              <address>Jl. Pinang Jl. Margonda No.9a, Pondok Cina, Kecamatan Beji, Kota Depok, Jawa Barat 16424</address>
             </div>
           </div>
           <!--/div -->
@@ -45,11 +45,10 @@
     <!--/.row -->
     <hr class="mt-11 mt-md-12 mb-7" />
     <div class="d-md-flex align-items-center justify-content-between">
-      <p class="mb-2 mb-lg-0">© {{ date('Y') }} {{ config('app.name') }}. All rights reserved.</p>
+      <p class="mb-2 mb-lg-0">© {{ date('Y') }} Shoesbaru. All rights reserved.</p>
       <nav class="nav social social-muted mb-0 text-md-end">
         <a href="#"><i class="uil uil-twitter"></i></a>
         <a href="#"><i class="uil uil-facebook-f"></i></a>
-        <a href="#"><i class="uil uil-dribbble"></i></a>
         <a href="#"><i class="uil uil-instagram"></i></a>
         <a href="#"><i class="uil uil-youtube"></i></a>
       </nav>
