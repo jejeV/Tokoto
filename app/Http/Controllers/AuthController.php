@@ -16,7 +16,6 @@ class AuthController extends Controller
      */
     public function showLoginForm()
     {
-        // Jika sudah login, redirect sesuai role
         if (auth()->check()) {
             return $this->redirectAfterAuth();
         }
@@ -29,7 +28,6 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        // Jika sudah login, redirect sesuai role
         if (auth()->check()) {
             return $this->redirectAfterAuth();
         }
@@ -54,7 +52,6 @@ class AuthController extends Controller
      */
     public function showRegistrationForm()
     {
-        // Jika sudah login, redirect ke home
         if (auth()->check()) {
             return redirect()->route('home');
         }
@@ -67,7 +64,6 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        // Jika sudah login, redirect ke home
         if (auth()->check()) {
             return redirect()->route('home');
         }
@@ -86,13 +82,9 @@ class AuthController extends Controller
             'role' => 'customer'
         ]);
 
-        // Event untuk verifikasi email (jika diperlukan)
         event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect()->route('home')
-               ->with('success', 'Registrasi berhasil! Selamat datang '.$user->name);
+        return redirect()->route('login')
+                        ->with('success', 'Registrasi berhasil! Silakan login untuk melanjutkan.');
     }
 
     /**
@@ -100,7 +92,6 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        // Jika belum login, redirect ke login
         if (!auth()->check()) {
             return redirect()->route('login');
         }
@@ -110,7 +101,7 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login')
-               ->with('status', 'Anda telah berhasil logout');
+                        ->with('status', 'Anda telah berhasil logout.');
     }
 
     /**
@@ -120,10 +111,10 @@ class AuthController extends Controller
     {
         if (auth()->user()->role === 'admin') {
             return redirect()->route('admin.dashboard')
-                   ->with('success', 'Selamat datang Admin!');
+                            ->with('success', 'Selamat datang Admin!');
         }
 
         return redirect()->route('home')
-               ->with('success', 'Selamat datang kembali!');
+                        ->with('success', 'Selamat datang kembali!');
     }
 }

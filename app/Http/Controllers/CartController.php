@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+
+
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Cart;
@@ -17,10 +19,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
+
 class CartController extends Controller
 {
-    private const MAX_CART_ITEMS = 50; // Batasan jumlah item unik di keranjang
-    private const MAX_QUANTITY_PER_ITEM = 99; // Batasan kuantitas per item
+    private const MAX_CART_ITEMS = 50;
+    private const MAX_QUANTITY_PER_ITEM = 99;
 
     /**
      * Helper privat untuk mendapatkan pengenal keranjang (user_id atau session_id).
@@ -32,7 +35,6 @@ class CartController extends Controller
             return ['user_id' => Auth::id()];
         }
 
-        // Jika user tidak login dan tidak ada session_id keranjang, buat yang baru
         if (!Session::has('cart_session_id')) {
             Session::put('cart_session_id', Str::uuid()->toString());
         }
@@ -109,66 +111,91 @@ class CartController extends Controller
      */
     private function mergeGuestCartItem(Cart $guestItem, int $userId): void
     {
-        $productVariant = ProductVariant::find($guestItem->product_variant_id);
+        // Mendapatkan varian jika ada, atau produk utama jika tidak bervarian
+        $productOrVariant = $guestItem->product_variant_id
+            ? ProductVariant::find($guestItem->product_variant_id)
+            : Product::find($guestItem->product_id);
 
-        if (!$productVariant) {
-            Log::warning("Variant not found during merge (product_variant_id: {$guestItem->product_variant_id})", [
+        if (!$productOrVariant) {
+            Log::warning("Product/Variant not found during merge (product_id: {$guestItem->product_id}, variant_id: {$guestItem->product_variant_id})", [
                 'cart_item_id' => $guestItem->id,
-                'product_id' => $guestItem->product_id,
-                'product_variant_id' => $guestItem->product_variant_id
             ]);
-            $guestItem->delete(); // Hapus item jika varian tidak valid
+            $guestItem->delete(); // Hapus item jika produk/varian tidak valid
             return;
         }
 
+        // Cek stok berdasarkan apakah ini varian atau produk utama
+        $availableStock = $productOrVariant instanceof ProductVariant ? $productOrVariant->stock : $productOrVariant->stock;
+        $currentPrice = $productOrVariant instanceof ProductVariant ? $productOrVariant->price : $productOrVariant->price;
+
+
+        // Cari item yang cocok di keranjang user
         $userCartItem = Cart::where('user_id', $userId)
-            ->where('product_variant_id', $productVariant->id)
+            ->where('product_id', $guestItem->product_id) // Tambahkan product_id untuk keakuratan
+            ->where('product_variant_id', $guestItem->product_variant_id) // Akan null jika non-varian
             ->first();
 
         if ($userCartItem) {
             $newQuantity = $userCartItem->quantity + $guestItem->quantity;
-            if ($newQuantity <= $productVariant->stock && $newQuantity <= self::MAX_QUANTITY_PER_ITEM) {
+            if ($newQuantity <= $availableStock && $newQuantity <= self::MAX_QUANTITY_PER_ITEM) {
                 $userCartItem->quantity = $newQuantity;
                 $userCartItem->save();
+            } else {
+                Log::warning("Guest cart merge: Quantity exceeds stock or max quantity for existing item (Cart ID: {$userCartItem->id})", [
+                    'requested_quantity' => $newQuantity,
+                    'available_stock' => $availableStock,
+                    'max_quantity_per_item' => self::MAX_QUANTITY_PER_ITEM,
+                ]);
             }
-            $guestItem->delete(); // Hapus item tamu setelah digabungkan
+            $guestItem->delete(); // Hapus item tamu setelah digabungkan (atau gagal digabungkan karena batasan)
         } else {
             // Jika tidak ada item yang cocok di keranjang user, update item tamu menjadi milik user
-            if ($guestItem->quantity <= $productVariant->stock && $guestItem->quantity <= self::MAX_QUANTITY_PER_ITEM) {
+            if ($guestItem->quantity <= $availableStock && $guestItem->quantity <= self::MAX_QUANTITY_PER_ITEM) {
                 $guestItem->update([
                     'user_id' => $userId,
                     'session_id' => null, // Hapus session_id setelah dikaitkan dengan user
-                    'product_variant_id' => $productVariant->id, // Pastikan id varian benar
-                    'price' => $productVariant->price, // Update harga sesuai varian
+                    'price' => $currentPrice, // Update harga sesuai varian/produk saat ini
                 ]);
             } else {
+                Log::warning("Guest cart merge: Quantity exceeds stock or max quantity for new item (Cart ID: {$guestItem->id})", [
+                    'requested_quantity' => $guestItem->quantity,
+                    'available_stock' => $availableStock,
+                    'max_quantity_per_item' => self::MAX_QUANTITY_PER_ITEM,
+                ]);
                 $guestItem->delete(); // Hapus item tamu jika kuantitasnya melebihi stok
             }
         }
     }
 
+
     /**
      * Menemukan varian produk berdasarkan produk dan atribut (ukuran/warna).
+     * Jika sizeId dan colorId keduanya null, itu berarti mencari produk non-varian.
      */
     private function findProductVariant(int $productId, ?int $sizeId, ?int $colorId): ?ProductVariant
     {
-        return ProductVariant::where('product_id', $productId)
-            ->where(function ($query) use ($sizeId) {
-                if ($sizeId !== null) {
-                    $query->where('size_id', $sizeId);
-                } else {
-                    $query->whereNull('size_id');
-                }
-            })
-            ->where(function ($query) use ($colorId) {
-                if ($colorId !== null) {
-                    $query->where('color_id', $colorId);
-                } else {
-                    $query->whereNull('color_id');
-                }
-            })
-            ->first();
+        // Jika kedua ID null, artinya ini adalah produk yang tidak bervarian sama sekali.
+        // Dalam kasus ini, kita tidak mencari di ProductVariant, tetapi di Product itu sendiri.
+        // Namun, metode ini spesifik untuk ProductVariant.
+        // Logic untuk produk non-varian akan ditangani langsung di method `add()` dan `validateCart()`.
+
+        $query = ProductVariant::where('product_id', $productId);
+
+        if ($sizeId !== null) {
+            $query->where('size_id', $sizeId);
+        } else {
+            $query->whereNull('size_id');
+        }
+
+        if ($colorId !== null) {
+            $query->where('color_id', $colorId);
+        } else {
+            $query->whereNull('color_id');
+        }
+
+        return $query->first();
     }
+
 
     /**
      * Menampilkan konten keranjang.
@@ -180,15 +207,8 @@ class CartController extends Controller
         $cartItems = $cartData['cartItems']; // Ini adalah Collection of Cart Models
         $cartTotal = $cartData['cartTotal'];
 
-        // --- DEBUG: Uncomment baris di bawah ini untuk melihat tipe data $cartItems ---
-        // if ($cartItems->isNotEmpty()) {
-        //     dd($cartItems->first()); // Akan menampilkan objek App\Models\Cart
-        // } else {
-        //     dd('Keranjang kosong di index method.');
-        // }
-        // --- End Debug ---
-
-        // Mengambil ukuran dan warna yang tersedia
+        // Mengambil ukuran dan warna yang tersedia (ini bisa jadi daftar semua ukuran/warna yang aktif di sistem,
+        // atau yang relevan dengan produk di keranjang). Untuk kesederhanaan, ambil semua yang aktif.
         $availableSizes = Size::active()->orderBy('sort_order')->get();
         $availableColors = Color::active()->orderBy('sort_order')->get();
 
@@ -196,7 +216,7 @@ class CartController extends Controller
     }
 
     /**
-     * Menambahkan varian produk ke keranjang.
+     * Menambahkan produk/varian ke keranjang.
      */
     public function add(Request $request): RedirectResponse
     {
@@ -207,40 +227,76 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1|max:' . self::MAX_QUANTITY_PER_ITEM,
         ]);
 
+        $productId = $validated['product_id'];
+        $selectedSizeId = $validated['selected_size_id'];
+        $selectedColorId = $validated['selected_color_id'];
+        $requestedQuantity = $validated['quantity'];
+
         DB::beginTransaction();
         try {
-            $variant = $this->findProductVariant(
-                $validated['product_id'],
-                $validated['selected_size_id'],
-                $validated['selected_color_id']
-            );
-
-            if (!$variant) {
-                return redirect()->back()->with('error', 'Kombinasi ukuran/warna tidak valid untuk produk ini.');
+            $product = Product::find($productId);
+            if (!$product) { // Should not happen due to exists:products,id validation
+                return redirect()->back()->with('error', 'Produk tidak ditemukan.');
             }
 
-            // Periksa kapasitas keranjang total (jumlah item berbeda)
-            $currentCartItemsCount = $this->getCartQuery()->count(); // Menghitung jumlah item unik
-            if ($currentCartItemsCount >= self::MAX_CART_ITEMS &&
-                !$this->getCartQuery()->where('product_variant_id', $variant->id)->exists()) {
-                // Jika keranjang penuh dan item belum ada di keranjang
-                return redirect()->back()->with('error', 'Keranjang penuh. Maksimal ' . self::MAX_CART_ITEMS . ' jenis item berbeda.');
+            $productOrVariant = null;
+            $stockAvailable = 0;
+            $itemPrice = 0;
+            $isVariant = false; // Flag untuk menentukan apakah ini varian atau produk utama
+
+            // Cek apakah produk ini memiliki varian
+            $hasVariants = $product->productVariants()->exists();
+
+            if ($hasVariants) {
+                // Jika produk memiliki varian, cari varian yang spesifik
+                $productOrVariant = $this->findProductVariant(
+                    $productId,
+                    $selectedSizeId,
+                    $selectedColorId
+                );
+
+                if (!$productOrVariant) {
+                    return redirect()->back()->with('error', 'Kombinasi ukuran/warna tidak valid untuk produk ini.');
+                }
+                $stockAvailable = $productOrVariant->stock;
+                $itemPrice = $productOrVariant->price;
+                $isVariant = true;
+            } else {
+                // Produk tidak memiliki varian, gunakan data dari model Product langsung
+                if ($selectedSizeId !== null || $selectedColorId !== null) {
+                    // Ini adalah error: pengguna mencoba memilih varian pada produk non-varian
+                    return redirect()->back()->with('error', 'Produk ini tidak memiliki varian ukuran atau warna.');
+                }
+                $productOrVariant = $product;
+                $stockAvailable = $product->stock;
+                $itemPrice = $product->price;
+                $isVariant = false;
             }
 
-            if ($variant->stock < $validated['quantity']) {
-                return redirect()->back()->with('error', 'Stok tidak mencukupi. Stok tersedia: ' . $variant->stock);
+            // Periksa stok produk/varian yang ditemukan
+            if ($stockAvailable < $requestedQuantity) {
+                return redirect()->back()->with('error', 'Stok tidak mencukupi. Stok tersedia: ' . $stockAvailable);
             }
 
             $identifier = $this->getCartIdentifier();
-            $cartItem = $this->getCartQuery()
-                ->where('product_variant_id', $variant->id)
-                ->first();
+
+            // Cari item keranjang yang cocok (berdasarkan product_id DAN product_variant_id jika ada)
+            $cartItemQuery = $this->getCartQuery()
+                ->where('product_id', $productId);
+
+            if ($isVariant) {
+                $cartItemQuery->where('product_variant_id', $productOrVariant->id);
+            } else {
+                $cartItemQuery->whereNull('product_variant_id'); // Untuk produk non-varian
+            }
+            $cartItem = $cartItemQuery->first();
+
 
             if ($cartItem) {
-                $newQuantity = $cartItem->quantity + $validated['quantity'];
+                $newQuantity = $cartItem->quantity + $requestedQuantity;
 
-                if ($newQuantity > $variant->stock) {
-                    return redirect()->back()->with('error', 'Total kuantitas akan melebihi stok. Stok tersedia: ' . $variant->stock);
+                if ($newQuantity > $stockAvailable) {
+                    return redirect()->back()->with('error', 'Total kuantitas akan melebihi stok. Stok tersedia: ' . $stockAvailable);
                 }
 
                 if ($newQuantity > self::MAX_QUANTITY_PER_ITEM) {
@@ -249,27 +305,42 @@ class CartController extends Controller
 
                 $cartItem->update(['quantity' => $newQuantity]);
             } else {
+                // Periksa kapasitas keranjang total (jumlah item berbeda) sebelum menambah item baru
+                $currentCartItemsCount = $this->getCartQuery()->count();
+                if ($currentCartItemsCount >= self::MAX_CART_ITEMS) {
+                    return redirect()->back()->with('error', 'Keranjang penuh. Maksimal ' . self::MAX_CART_ITEMS . ' jenis item berbeda.');
+                }
+
                 Cart::create([
                     'user_id' => $identifier['user_id'] ?? null,
                     'session_id' => $identifier['session_id'] ?? null,
-                    'product_id' => $validated['product_id'],
-                    'product_variant_id' => $variant->id,
-                    'quantity' => $validated['quantity'],
-                    'price' => $variant->price, // Simpan harga varian saat ini
+                    'product_id' => $productId,
+                    'product_variant_id' => $isVariant ? $productOrVariant->id : null, // Set product_variant_id jika ini varian
+                    'quantity' => $requestedQuantity,
+                    'price' => $itemPrice, // Gunakan harga yang benar (dari produk atau varian)
                 ]);
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Produk berhasil ditambahkan ke keranjang!');
 
+            // Bangun pesan sukses dengan nama produk dan varian (jika ada)
+            $productNameForMessage = $product->name . ($isVariant ? $this->buildVariantName($productOrVariant) : '');
+            return redirect()->back()->with('success', 'Produk "' . $productNameForMessage . '" berhasil ditambahkan ke keranjang!');
+
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            $errors = $e->validator->errors()->all();
+            return redirect()->back()->with('error', 'Validasi gagal: ' . implode(', ', $errors));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error adding to cart: ' . $e->getMessage(), [
-                'product_id' => $validated['product_id'],
-                'user_id' => Auth::id()
+                'product_id' => $productId,
+                'selected_size_id' => $selectedSizeId,
+                'selected_color_id' => $selectedColorId,
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(), // Log full trace for deeper debugging
             ]);
-
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menambahkan produk ke keranjang.');
+            return redirect()->back()->with('error', 'Terjadi kesalahan internal saat menambahkan produk ke keranjang. Silakan coba lagi. Debug: ' . $e->getMessage());
         }
     }
 
@@ -278,9 +349,14 @@ class CartController extends Controller
      */
     public function updateQuantity(Request $request, $cartItemId): RedirectResponse
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1|max:' . self::MAX_QUANTITY_PER_ITEM,
-        ]);
+        try {
+            $request->validate([
+                'quantity' => 'required|integer|min:1|max:' . self::MAX_QUANTITY_PER_ITEM,
+            ]);
+        } catch (ValidationException $e) {
+            $errors = $e->validator->errors()->all();
+            return redirect()->back()->with('error', 'Validasi kuantitas gagal: ' . implode(', ', $errors));
+        }
 
         $newQuantity = $request->input('quantity');
 
@@ -292,15 +368,21 @@ class CartController extends Controller
                 return redirect()->route('cart.index')->with('error', 'Item keranjang tidak ditemukan.');
             }
 
-            $productVariant = ProductVariant::find($cartItem->product_variant_id);
+            // Dapatkan stok dari varian atau produk utama
+            $productOrVariant = $cartItem->productVariant
+                ? $cartItem->productVariant
+                : ($cartItem->product ?? null); // Fallback ke product jika tidak ada varian
 
-            if (!$productVariant) {
-                $cartItem->delete(); // Hapus item jika varian tidak ada atau tidak aktif
-                return redirect()->route('cart.index')->with('error', 'Varian produk tidak ditemukan atau tidak aktif, item dihapus.');
+            if (!$productOrVariant) {
+                $cartItem->delete(); // Hapus item jika produk/varian tidak valid lagi
+                Log::warning("Cart item removed due to missing product/variant: ID " . $cartItemId);
+                return redirect()->route('cart.index')->with('error', 'Produk atau varian tidak ditemukan, item dihapus dari keranjang.');
             }
+            $availableStock = $productOrVariant->stock;
 
-            if ($newQuantity > $productVariant->stock) {
-                return redirect()->back()->with('error', 'Kuantitas melebihi stok. Stok tersedia: ' . $productVariant->stock);
+
+            if ($newQuantity > $availableStock) {
+                return redirect()->back()->with('error', 'Kuantitas melebihi stok yang tersedia: ' . $availableStock . '.');
             }
 
             $cartItem->quantity = $newQuantity;
@@ -313,9 +395,9 @@ class CartController extends Controller
             DB::rollBack();
             Log::error('Error updating cart item quantity: ' . $e->getMessage(), [
                 'cart_item_id' => $cartItemId,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(),
             ]);
-
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui kuantitas.');
         }
     }
@@ -325,10 +407,15 @@ class CartController extends Controller
      */
     public function updateVariant(Request $request, $cartItemId): RedirectResponse
     {
-        $validated = $request->validate([
-            'size_id' => 'nullable|exists:sizes,id',
-            'color_id' => 'nullable|exists:colors,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'size_id' => 'nullable|exists:sizes,id',
+                'color_id' => 'nullable|exists:colors,id',
+            ]);
+        } catch (ValidationException $e) {
+            $errors = $e->validator->errors()->all();
+            return redirect()->back()->with('error', 'Validasi varian gagal: ' . implode(', ', $errors));
+        }
 
         $newSizeId = $validated['size_id'] ?? null;
         $newColorId = $validated['color_id'] ?? null;
@@ -341,26 +428,28 @@ class CartController extends Controller
                 return redirect()->route('cart.index')->with('error', 'Item keranjang tidak ditemukan.');
             }
 
-            // Dapatkan varian produk saat ini untuk mendapatkan product_id
-            $currentProductVariant = ProductVariant::find($cartItem->product_variant_id);
-            if (!$currentProductVariant) {
-                $cartItem->delete(); // Hapus item jika varian saat ini tidak ditemukan
-                return redirect()->route('cart.index')->with('error', 'Varian produk asli tidak ditemukan atau tidak aktif, item dihapus.');
+            // Dapatkan produk terkait (penting untuk menemukan varian baru)
+            $product = $cartItem->product;
+            if (!$product) {
+                 $cartItem->delete(); // Hapus item jika produk tidak valid
+                Log::warning("Cart item removed due to missing product during variant update: ID " . $cartItemId);
+                return redirect()->route('cart.index')->with('error', 'Produk tidak ditemukan, item dihapus dari keranjang.');
             }
 
             // Cari varian baru berdasarkan product_id asli dan size/color baru
             $targetVariant = $this->findProductVariant(
-                $currentProductVariant->product_id, // Gunakan product_id dari varian asli
+                $product->id,
                 $newSizeId,
                 $newColorId
             );
 
             if (!$targetVariant) {
-                return redirect()->back()->with('error', 'Kombinasi ukuran/warna tidak tersedia untuk produk ini.');
+                return redirect()->back()->with('error', 'Kombinasi ukuran/warna yang dipilih tidak tersedia untuk produk ini.');
             }
 
             // Jika varian yang dipilih sama dengan varian saat ini
             if ($targetVariant->id === $cartItem->product_variant_id) {
+                DB::commit(); // Tidak ada perubahan, commit transaksi
                 return redirect()->route('cart.index')->with('success', 'Varian sudah terpilih.');
             }
 
@@ -373,8 +462,9 @@ class CartController extends Controller
                     $query->where('session_id', $identifier['session_id']);
                 }
             })
+            ->where('product_id', $product->id) // Tambahkan product_id untuk presisi
             ->where('product_variant_id', $targetVariant->id)
-            ->where('id', '!=', $cartItem->id) // Jangan bandingkan dengan item itu sendiri
+            ->where('id', '!=', $cartItem->id) // Jangan bandingkan dengan item yang sedang diupdate
             ->first();
 
             if ($existingItemWithNewVariant) {
@@ -396,7 +486,7 @@ class CartController extends Controller
                 return redirect()->route('cart.index')->with('success', 'Item keranjang berhasil digabungkan!');
             }
 
-            // Periksa stok untuk kuantitas item yang ada saat ini
+            // Periksa stok untuk kuantitas item yang ada saat ini sebelum mengupdate varian
             if ($cartItem->quantity > $targetVariant->stock) {
                 return redirect()->back()->with('error', 'Varian yang dipilih tidak memiliki stok yang cukup untuk kuantitas Anda saat ini. Stok tersedia: ' . $targetVariant->stock);
             }
@@ -409,13 +499,17 @@ class CartController extends Controller
             DB::commit();
             return redirect()->route('cart.index')->with('success', 'Varian item keranjang berhasil diperbarui!');
 
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            $errors = $e->validator->errors()->all();
+            return redirect()->back()->with('error', 'Validasi varian gagal: ' . implode(', ', $errors));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating cart item variant: ' . $e->getMessage(), [
                 'cart_item_id' => $cartItemId,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(),
             ]);
-
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui varian keranjang: ' . $e->getMessage());
         }
     }
@@ -442,9 +536,9 @@ class CartController extends Controller
             DB::rollBack();
             Log::error('Error removing cart item: ' . $e->getMessage(), [
                 'cart_item_id' => $cartItemId,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(),
             ]);
-
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menghapus produk.');
         }
     }
@@ -459,13 +553,15 @@ class CartController extends Controller
             $deletedCount = $this->getCartQuery()->delete();
             DB::commit();
 
-            Log::info('Cart cleared', ['items_deleted' => $deletedCount]);
+            Log::info('Cart cleared', ['items_deleted' => $deletedCount, 'user_id' => Auth::id() ?? Session::get('cart_session_id')]);
 
             return back()->with('success', 'Keranjang belanja berhasil dikosongkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error clearing cart: ' . $e->getMessage());
-
+            Log::error('Error clearing cart: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', 'Terjadi kesalahan saat mengosongkan keranjang.');
         }
     }
@@ -479,8 +575,11 @@ class CartController extends Controller
             $count = $this->getCartItemsCount();
             return response()->json(['count' => $count]);
         } catch (\Exception $e) {
-            Log::error('Error getting cart count: ' . $e->getMessage());
-            return response()->json(['count' => 0]);
+            Log::error('Error getting cart count: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['count' => 0], 500); // Mengembalikan 500 jika ada error
         }
     }
 
@@ -497,15 +596,19 @@ class CartController extends Controller
                 ->get(); // Ini mengembalikan Koleksi model Cart
 
             $cartTotal = $cartItems->sum(function($item) {
+                // $item di sini adalah model Cart, jadi $item->quantity dan $item->price benar.
                 return $item->quantity * $item->price;
             });
 
             return [
-                'cartItems' => $cartItems,
+                'cartItems' => $cartItems, // Mengembalikan Koleksi model Cart
                 'cartTotal' => $cartTotal
             ];
         } catch (\Exception $e) {
-            Log::error('Error fetching cart for checkout: ' . $e->getMessage());
+            Log::error('Error fetching cart for checkout: ' . $e->getMessage(), [
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(),
+            ]);
             return [
                 'cartItems' => collect(),
                 'cartTotal' => 0,
@@ -571,47 +674,80 @@ class CartController extends Controller
                 ->get();
 
             $errors = [];
+            $cartModified = false; // Flag untuk menandai jika ada perubahan di keranjang
 
             foreach ($cartItems as $item) {
-                // $item di sini adalah model Cart
-                if (!$item->productVariant) {
-                    $errors[] = "Produk '" . ($item->product->name ?? 'Tidak Dikenal') . "' dengan varian ID {$item->product_variant_id} tidak tersedia lagi atau variannya hilang.";
-                    // Hapus item dari cart jika variannya tidak valid
+                $productName = $item->product->name ?? 'Produk Tidak Dikenal';
+
+                // Case 1: Varian produk tidak ditemukan atau sudah dihapus
+                if ($item->product_variant_id && (!$item->productVariant || !$item->productVariant->exists)) {
+                    $errors[] = "Produk '" . $productName . "' dengan varian ID {$item->product_variant_id} tidak tersedia lagi atau variannya hilang. Item telah dihapus.";
+                    $item->delete(); // Hapus item dari cart jika variannya tidak valid
+                    $cartModified = true;
+                    continue; // Lanjutkan ke item berikutnya
+                }
+                // Case 2: Produk non-varian tidak ditemukan
+                if (!$item->product_variant_id && (!$item->product || !$item->product->exists)) {
+                    $errors[] = "Produk '" . $productName . "' tidak tersedia lagi atau telah dihapus. Item telah dihapus.";
                     $item->delete();
+                    $cartModified = true;
                     continue;
                 }
 
-                if ($item->quantity > $item->productVariant->stock) {
-                    $errors[] = "Stok '" . ($item->product->name ?? 'Produk Tidak Dikenal') . $this->buildVariantName($item->productVariant) . "' tidak mencukupi. Tersedia: {$item->productVariant->stock}. Jumlah di keranjang Anda: {$item->quantity}.";
+                $sourceEntity = $item->productVariant ?? $item->product; // Gunakan varian jika ada, jika tidak, gunakan produk
+                $variantName = $this->buildVariantName($item->productVariant); // Hanya membangun nama jika ada varian
+
+                // Case 3: Stok tidak mencukupi
+                if ($item->quantity > $sourceEntity->stock) {
+                    $errors[] = "Stok '" . $productName . $variantName . "' tidak mencukupi. Tersedia: {$sourceEntity->stock}. Jumlah di keranjang Anda: {$item->quantity}.";
                 }
 
-                if ($item->price != $item->productVariant->price) {
-                    $errors[] = "Harga '" . ($item->product->name ?? 'Produk Tidak Dikenal') . $this->buildVariantName($item->productVariant) . "' telah berubah dari Rp" . number_format($item->price, 0, ',', '.') . " menjadi Rp" . number_format($item->productVariant->price, 0, ',', '.') . ".";
-                    // Update harga di cart
-                    $item->price = $item->productVariant->price;
+                // Case 4: Harga telah berubah
+                if ($item->price != $sourceEntity->price) {
+                    $errors[] = "Harga '" . $productName . $variantName . "' telah berubah dari Rp" . number_format($item->price, 0, ',', '.') . " menjadi Rp" . number_format($sourceEntity->price, 0, ',', '.') . ". Harga telah diperbarui.";
+                    $item->price = $sourceEntity->price;
                     $item->save();
+                    $cartModified = true;
                 }
             }
 
-            // Setelah validasi, jika ada perubahan (seperti update harga atau penghapusan),
-            // kita harus mengambil kembali data keranjang terbaru untuk mendapatkan total terbaru.
-            $updatedCartData = $this->getCartForCheckout(); // Ini sekarang mengembalikan model Eloquent dan total
+            if ($cartModified) {
+                $updatedCartData = $this->getCartForCheckout();
+                return response()->json([
+                    'valid' => empty($errors),
+                    'errors' => $errors,
+                    'cart_subtotal' => $updatedCartData['cartTotal'],
+                    'cart_total_quantity' => $updatedCartData['cartItems']->sum('quantity'),
+                    'cart_modified' => true // Memberi tahu frontend bahwa keranjang telah diubah
+                ]);
+            } else {
+                // Jika tidak ada perubahan, kita bisa langsung hitung total dari $cartItems yang ada
+                $currentCartTotal = $cartItems->sum(function($item) {
+                    return $item->quantity * $item->price;
+                });
+                $currentCartTotalQuantity = $cartItems->sum('quantity');
 
-            return response()->json([
-                'valid' => empty($errors),
-                'errors' => $errors,
-                'cart_subtotal' => $updatedCartData['cartTotal'],
-                'cart_total_quantity' => $updatedCartData['cartItems']->sum('quantity'), // Jumlah dari koleksi Eloquent
-            ]);
+                return response()->json([
+                    'valid' => empty($errors),
+                    'errors' => $errors,
+                    'cart_subtotal' => $currentCartTotal,
+                    'cart_total_quantity' => $currentCartTotalQuantity,
+                    'cart_modified' => false
+                ]);
+            }
 
         } catch (\Exception $e) {
-            Log::error('Error validating cart: ' . $e->getMessage());
+            Log::error('Error validating cart: ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in ' . $e->getFile(), [
+                'user_id' => Auth::id(),
+                'exception_trace' => $e->getTraceAsString(),
+            ]);
 
             return response()->json([
                 'valid' => false,
-                'errors' => ['Terjadi kesalahan saat memvalidasi keranjang.'],
+                'errors' => ['Terjadi kesalahan saat memvalidasi keranjang. Silakan coba lagi.'],
                 'cart_subtotal' => 0,
                 'cart_total_quantity' => 0,
+                'cart_modified' => false
             ], 500);
         }
     }

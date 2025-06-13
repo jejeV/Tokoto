@@ -7,13 +7,25 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ProductVariant;
+use App\Models\Size;
+use App\Models\Color;
 use Midtrans\Snap;
 use Midtrans\Config;
+use Midtrans\Notification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
+    public function __construct()
+    {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+    }
+
     public function showCheckoutForm()
     {
         if (!Auth::check()) {
@@ -23,8 +35,8 @@ class CheckoutController extends Controller
         $user = Auth::user();
 
         $cartItems = Cart::where('user_id', $user->id)
-                         ->with(['product', 'productVariant.size', 'productVariant.color'])
-                         ->get();
+                             ->with(['product', 'productVariant.size', 'productVariant.color'])
+                             ->get();
 
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Keranjang belanja Anda kosong. Silakan tambahkan produk terlebih dahulu.');
@@ -123,7 +135,7 @@ class CheckoutController extends Controller
                     $productName .= ' (' . $variantColor . ')';
                 }
 
-                $itemTotalPrice = $item->quantity * $item->price; // Gunakan harga dari keranjang item
+                $itemTotalPrice = $item->quantity * $item->price;
                 $cartSubtotal += $itemTotalPrice;
                 $orderTotal += $itemTotalPrice;
 
@@ -171,15 +183,23 @@ class CheckoutController extends Controller
             $order->shipping_method = $request->shipping_method;
             $order->shipping_cost = $shippingCost;
             $order->payment_method = $request->payment_method;
-            $order->order_status = 'pending';
-            $order->payment_status = 'pending';
+            $order->order_status = 'initiated';
+            $order->payment_status = 'unpaid';
+            $order->midtrans_transaction_id = null;
+            $order->midtrans_payment_type = null;
+            $order->midtrans_gross_amount = null;
+            $order->midtrans_masked_card = null;
+            $order->midtrans_bank = null;
+            $order->midtrans_va_numbers = null;
+            $order->payment_redirect_url = null;
+            $order->midtrans_snap_token = null;
 
             $order->billing_first_name = $request->first_name;
             $order->billing_last_name = $request->last_name;
             $order->billing_email = $request->email;
             $order->billing_phone = $request->phone;
             $order->billing_address_line_1 = $request->address_line1;
-            $order->billing_address_line_2 = $request->address_line2;
+            $order->billing_address_line_2 = $request->address_line2; // Corrected from address_address2
             $order->billing_zip_code = $request->zip_code;
 
             if ($request->shipping_address_same_as_billing) {
@@ -215,7 +235,6 @@ class CheckoutController extends Controller
                 $orderItem->save();
             }
 
-            Cart::where('user_id', $user->id)->delete();
 
             DB::commit();
 
@@ -264,9 +283,8 @@ class CheckoutController extends Controller
             ];
 
             $snapToken = Snap::getSnapToken($params);
-
             $order->midtrans_snap_token = $snapToken;
-            $order->payment_redirect_url = $snapToken; 
+            $order->payment_redirect_url = $snapToken;
             $order->save();
 
             return response()->json(['success' => true, 'snap_token' => $snapToken, 'order_id' => $order->id]);
@@ -280,67 +298,113 @@ class CheckoutController extends Controller
 
     public function midtransCallback(Request $request)
     {
-        $serverKey = config('midtrans.server_key');
-        Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        $notif = new Notification();
 
-        $notif = new \Midtrans\Notification();
-
-        $transaction = $notif->transaction_status;
-        $type = $notif->payment_type;
+        $transactionStatus = $notif->transaction_status;
+        $fraudStatus = $notif->fraud_status;
         $orderId = $notif->order_id;
-        $fraud = $notif->fraud_status;
+        $statusCode = $notif->status_code;
 
         $order = Order::where('order_number', $orderId)->first();
 
         if (!$order) {
-            Log::error("Midtrans Callback: Order not found for order_number: " . $orderId);
-            return response('Order Not Found', 404);
+            Log::error("Order not found for order_id: " . $orderId);
+            return response()->json(['message' => 'Order not found'], 404);
         }
 
-        $newOrderStatus = $order->order_status;
-        $newPaymentStatus = $order->payment_status;
+        $previousPaymentStatus = $order->payment_status;
 
-        if ($transaction == 'capture') {
-            if ($type == 'credit_card') {
-                if ($fraud == 'challenge') {
-                    $newOrderStatus = 'pending';
-                    $newPaymentStatus = 'challenge';
-                } else {
-                    $newOrderStatus = 'processing';
-                    $newPaymentStatus = 'settlement';
-                }
+        if ($transactionStatus == 'capture') {
+            if ($fraudStatus == 'challenge') {
+                $order->payment_status = 'challenge';
+                $order->order_status = 'pending_challenge';
+            } else if ($fraudStatus == 'accept') {
+                $order->payment_status = 'success';
+                $order->order_status = 'processing';
             }
-        } elseif ($transaction == 'settlement') {
-            $newOrderStatus = 'processing';
-            $newPaymentStatus = 'settlement';
-        } elseif ($transaction == 'pending') {
-            $newOrderStatus = 'pending';
-            $newPaymentStatus = 'pending';
-        } elseif ($transaction == 'deny') {
-            $newOrderStatus = 'cancelled';
-            $newPaymentStatus = 'denied';
-        } elseif ($transaction == 'expire') {
-            $newOrderStatus = 'cancelled';
-            $newPaymentStatus = 'expired';
-        } elseif ($transaction == 'cancel') {
-            $newOrderStatus = 'cancelled';
-            $newPaymentStatus = 'cancelled';
+        } else if ($transactionStatus == 'settlement') {
+            $order->payment_status = 'success';
+            $order->order_status = 'processing';
+        } else if ($transactionStatus == 'pending') {
+            $order->payment_status = 'pending';
+            $order->order_status = 'waiting_payment';
+        } else if ($transactionStatus == 'deny') {
+            $order->payment_status = 'denied';
+            $order->order_status = 'cancelled';
+        } else if ($transactionStatus == 'expire') {
+            $order->payment_status = 'expired';
+            $order->order_status = 'cancelled';
+        } else if ($transactionStatus == 'cancel') {
+            $order->payment_status = 'cancelled';
+            $order->order_status = 'cancelled';
+        } else if ($transactionStatus == 'refund' || $transactionStatus == 'partial_refund') {
+            $order->payment_status = $transactionStatus;
+            $order->order_status = 'refunded';
         }
 
-        $order->order_status = $newOrderStatus;
-        $order->payment_status = $newPaymentStatus;
         $order->midtrans_transaction_id = $notif->transaction_id;
         $order->midtrans_payment_type = $notif->payment_type;
         $order->midtrans_gross_amount = $notif->gross_amount;
-        $order->midtrans_masked_card = $notif->masked_card ?? null;
-        $order->midtrans_bank = $notif->bank ?? null;
+        $order->midtrans_bank = $notif->va_numbers[0]->bank ?? $notif->bank ?? null;
         $order->midtrans_va_numbers = json_encode($notif->va_numbers ?? null);
+        $order->payment_redirect_url = $notif->finish_redirect_url ?? null;
+        $order->midtrans_masked_card = $notif->masked_card ?? null;
 
         $order->save();
 
-        return response('OK', 200);
+        if ($order->payment_status === 'success' && ($previousPaymentStatus !== 'success' && $previousPaymentStatus !== 'processing')) {
+            $this->updateStock($order);
+            // Hapus keranjang belanja di sini, setelah pembayaran dikonfirmasi sukses
+            Cart::where('user_id', $order->user_id)->delete();
+            Log::info("Cart cleared for user " . $order->user_id . " after successful payment for order " . $order->order_number);
+        }
+
+        return response()->json(['message' => 'Notification processed successfully'], 200);
+    }
+
+    protected function updateStock(Order $order)
+    {
+        foreach ($order->items as $item) {
+            $sizeId = null;
+            if ($item->selected_size) {
+                $size = Size::where('name', $item->selected_size)->first();
+                $sizeId = $size ? $size->id : null;
+            }
+
+            $colorId = null;
+            if ($item->selected_color) {
+                $color = Color::where('name', $item->selected_color)->first();
+                $colorId = $color ? $color->id : null;
+            }
+
+            $productVariantQuery = ProductVariant::where('product_id', $item->product_id);
+
+            if ($sizeId !== null) {
+                $productVariantQuery->where('size_id', $sizeId);
+            } else {
+                $productVariantQuery->whereNull('size_id');
+            }
+
+            if ($colorId !== null) {
+                $productVariantQuery->where('color_id', $colorId);
+            } else {
+                $productVariantQuery->whereNull('color_id');
+            }
+
+            $productVariant = $productVariantQuery->first();
+
+            if ($productVariant) {
+                if ($productVariant->stock >= $item->quantity) {
+                    $productVariant->stock -= $item->quantity;
+                    $productVariant->save();
+                    Log::info("Stock updated for variant ID: " . $productVariant->id . " by " . $item->quantity);
+                } else {
+                    Log::warning("Insufficient stock for product variant ID: " . $productVariant->id . ". Ordered: " . $item->quantity . ", Available: " . $productVariant->stock . ". Order " . $order->order_number . " may have issues.");
+                }
+            } else {
+                Log::error("Product variant not found for item ID: " . $item->id . " (Product ID: " . $item->product_id . ", Size: " . $item->selected_size . ", Color: " . $item->selected_color . "). Order " . $order->order_number);
+            }
+        }
     }
 
     public function success(Request $request)
@@ -377,10 +441,10 @@ class CheckoutController extends Controller
     {
         $user = Auth::user();
         $orders = Order::where('user_id', $user->id)
-                        ->orderBy('created_at', 'desc')
-                        ->paginate(10);
+                         ->orderBy('created_at', 'desc')
+                         ->paginate(10);
 
-        return view('orders.index', compact('orders'));
+        return view('order', compact('orders'));
     }
 
     public function showOrder(Order $order)
@@ -389,24 +453,8 @@ class CheckoutController extends Controller
             return redirect()->route('orders.index')->with('error', 'Pesanan tidak ditemukan atau Anda tidak memiliki akses.');
         }
 
-        // Memuat relasi yang diperlukan untuk order_items
         $order->load('orderItems');
 
-        return view('orders.show', compact('order'));
-    }
-
-    public function testMidtransConnection()
-    {
-        Config::$serverKey = config('midtrans.server_key');
-        Config::$isProduction = config('midtrans.is_production');
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
-
-        try {
-            $status = \Midtrans\Transaction::status('test-transaction-id-from-sandbox');
-            return response()->json(['success' => true, 'message' => 'Koneksi Midtrans berhasil. Detail status dummy: ' . json_encode($status)], 200);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Koneksi Midtrans gagal: ' . $e->getMessage()], 500);
-        }
+        return view('orderdetail', compact('order'));
     }
 }

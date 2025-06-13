@@ -275,7 +275,7 @@
 <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
 <script>
-jQuery(document).ready(function($) { 
+jQuery(document).ready(function($) {
     const checkoutForm = document.getElementById('checkout-form');
     const placeOrderButton = document.getElementById('place-order-button');
     const loadingIndicator = document.getElementById('loading-indicator');
