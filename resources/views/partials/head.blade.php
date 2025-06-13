@@ -5,8 +5,8 @@
   <meta name="keywords" content="bootstrap 5, business, corporate">
   <meta name="author" content="elemis">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>@yield('title', 'Shoes Baru - Team Four')</title>
-  <link rel="shortcut icon" href="{{ asset('assets/home/img/favicon.png') }}">
+  <title>@yield('title', 'Shoebaru - Ecommerce')</title>
+  <link rel="shortcut icon" href="{{ asset('assets/home/img/nike/favicon.png') }}">
 
   <!-- CSS -->
   <link rel="stylesheet" href="{{ asset('assets/home/css/plugins.css') }}">

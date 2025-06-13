@@ -44,7 +44,10 @@ class GoogleAuthController extends Controller
             // Login user
             Auth::login($user, true);
 
-            return redirect()->intended('/dashboard');
+            if ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard');
+            }
+            return redirect()->route('home');
 
         } catch (\Exception $e) {
             \Log::error('Google Auth Error: ' . $e->getMessage());

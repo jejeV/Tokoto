@@ -4,8 +4,8 @@
             <div class="topbar d-flex flex-row justify-content-lg-center align-items-center">
                 <div class="navbar-brand">
                     <a href="{{ url('/') }}">
-                        <img src="{{ asset('assets/home/img/logo-dark.png') }}"
-                            srcset="{{ asset('assets/home/img/logo-dark@2x.png') }} 2x" alt="" />
+                        <img src="{{ asset('assets/home/img/nike/logo-dark.png') }}"
+                            srcset="{{ asset('assets/home/img/nike/logo-dark@2x.png') }} 2x" alt="" />
                     </a>
                 </div>
             </div>
@@ -19,7 +19,7 @@
                 </div>
                 <div class="navbar-collapse offcanvas offcanvas-nav offcanvas-start">
                     <div class="offcanvas-header d-lg-none">
-                        <h3 class="text-white fs-30 mb-0">Sandbox</h3>
+                        <h3 class="text-white fs-30 mb-0">Shoebaru</h3>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
                             aria-label="Close"></button>
                     </div>
