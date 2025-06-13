@@ -19,7 +19,7 @@
     <meta name="description" content="" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('assets/admin/img/favicon/favicon.ico') }}" />
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/home/img/nike/favicon.png') }}" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -61,12 +61,13 @@
                   <span class="app-brand-logo demo">
                     <!-- SVG Logo tetap sama -->
                   </span>
-                  <span class="app-brand-text demo text-body fw-bolder">Shoesbaru</span>
+                  <!-- <span class="app-brand-text demo text-body fw-bolder">Shoesbaru</span> -->
+                  <img src="{{ asset('assets/home/img/nike/logo-dark.png') }}" srcset="{{ asset('assets/home/img/nike/logo-dark@2x.png') }} 2x" alt="" />
                 </a>
               </div>
               <!-- /Logo -->
-              <h4 class="mb-2">Adventure starts here 🚀</h4>
-              <p class="mb-4">Make your app management easy and fun!</p>
+              <h4 class="mb-2">Daftar Akun!</h4>
+              <p class="mb-4">Mulai langkahmu bersama koleksi sepatu terbaik!</p>
 
               @if($errors->any())
                 <div class="alert alert-danger mb-3">
@@ -168,9 +169,9 @@
               </form>
 
               <p class="text-center">
-                <span>Already have an account?</span>
+                <span>Sudah mempunyai akun?</span>
                 <a href="{{ route('login') }}">
-                  <span>Sign in instead</span>
+                  <span>Login</span>
                 </a>
               </p>
             </div>

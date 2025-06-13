@@ -11,12 +11,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
-    <title>Login | Admin E-Commerce</title>
+    <title>Login | Shoebaru</title>
 
     <meta name="description" content="Halaman login admin e-commerce" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ asset('assets/admin/img/favicon/favicon.ico') }}" />
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/home/img/nike/favicon.png') }}" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -59,12 +59,13 @@
               <!-- Logo -->
               <div class="app-brand justify-content-center">
                 <a href="index.html" class="app-brand-link gap-2">
-                  <span class="app-brand-text demo text-body fw-bolder">Shoesbaru</span>
+                  <!-- <span class="app-brand-text demo text-body fw-bolder">Shoebaru</span> -->
+                  <img src="{{ asset('assets/home/img/nike/logo-dark.png') }}" srcset="{{ asset('assets/home/img/nike/logo-dark@2x.png') }} 2x" alt="" />
                 </a>
               </div>
               <!-- /Logo -->
 
-              <h4 class="mb-2">Selamat Datang di Admin! 👋</h4>
+              <h4 class="mb-2">Selamat Datang! 👋</h4>
               <p class="mb-4">Silakan login untuk mengakses dashboard</p>
 
               @if($errors->any())
@@ -132,7 +133,7 @@
                 </div>
                 <div class="mb-3">
                     <a href="{{ route('login.google') }}" class="btn btn-outline-primary w-100">
-                      Masuk ke Akun
+                      Masuk dengan Google
                     </a>
                   </div>
               </form>

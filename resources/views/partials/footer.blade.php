@@ -3,8 +3,8 @@
     <div class="row gx-lg-0 gy-6">
       <div class="col-lg-4">
         <div class="widget">
-          <img class="mb-4" src="{{ asset('assets/home/img/logo-dark.png') }}" srcset="{{ asset('assets/home/img/logo-dark@2x.png') }} 2x" alt="" />
-          <p class="lead mb-0">I'm Caitlyn Sandbox, a photographer specializing in food, drink and product photography.</p>
+          <img class="mb-4" src="{{ asset('assets/home/img/nike/logo-dark.png') }}" srcset="{{ asset('assets/home/img/nike/logo-dark@2x.png') }} 2x" alt="" />
+          <p class="lead mb-0">Shoebaru, platform pilihan pecinta sepatu yang menawarkan berbagai koleksi terbaru dan eksklusif, dirancang untuk menunjang gaya dan kenyamananmu setiap hari.</p>
         </div>
         <!-- /.widget -->
       </div>
