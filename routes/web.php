@@ -9,19 +9,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
 Route::get('/', [PageController::class, 'index'])->name('home');
-Route::get('/process', [PageController::class, 'process'])->name('process');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::get('/collections', [ProductController::class, 'showCollections'])->name('collections');
 Route::get('/shop-product/{id}', [ProductController::class, 'showProductDetail'])->name('shop.product.detail');
@@ -73,3 +61,9 @@ Route::post('/midtrans-callback', [CheckoutController::class, 'midtransCallback'
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
     ->name('midtrans.callback');
 
+// Route::prefix('user')->name('user.')->group(function () {
+//     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
+//     Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
+//     Route::post('/profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
+//     Route::get('/addresses', [UserController::class, 'manageAddresses'])->name('addresses');
+// });

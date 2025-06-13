@@ -4,6 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\OrderItem;
+use App\Models\User;
+use App\Models\Province;
+use App\Models\City;
+
 
 class Order extends Model
 {
@@ -16,10 +21,18 @@ class Order extends Model
         'subtotal_amount',
         'discount_amount',
         'shipping_cost',
-        'status',
+        'shipping_method',
+        'order_status',
+        'payment_status',
         'payment_method',
-        'transaction_id_midtrans',
+        'midtrans_transaction_id',
         'midtrans_snap_token',
+        'midtrans_payment_type',
+        'midtrans_gross_amount',
+        'midtrans_masked_card',
+        'midtrans_bank',
+        'midtrans_va_numbers',
+        'payment_redirect_url',
         'billing_first_name',
         'billing_last_name',
         'billing_email',
@@ -28,7 +41,7 @@ class Order extends Model
         'billing_province_id',
         'billing_city_id',
         'billing_zip_code',
-        'billing_phone_number',
+        'billing_phone',
         'shipping_first_name',
         'shipping_last_name',
         'shipping_email',
@@ -40,49 +53,39 @@ class Order extends Model
         'shipping_phone_number',
     ];
 
-    /**
-     * Mendefinisikan relasi: satu Order dimiliki oleh satu User.
-     */
+    protected $casts = [
+        'midtrans_va_numbers' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+
+    // Definisi relasi: Sebuah Order dimiliki oleh satu User
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Mendefinisikan relasi: satu Order memiliki banyak OrderItem.
-     */
-    public function items()
+    public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
     }
 
-    /**
-     * Relasi ke Provinsi untuk alamat penagihan.
-     */
     public function billingProvince()
     {
         return $this->belongsTo(Province::class, 'billing_province_id');
     }
 
-    /**
-     * Relasi ke Kota untuk alamat penagihan.
-     */
     public function billingCity()
     {
         return $this->belongsTo(City::class, 'billing_city_id');
     }
 
-    /**
-     * Relasi ke Provinsi untuk alamat pengiriman.
-     */
     public function shippingProvince()
     {
         return $this->belongsTo(Province::class, 'shipping_province_id');
     }
 
-    /**
-     * Relasi ke Kota untuk alamat pengiriman.
-     */
     public function shippingCity()
     {
         return $this->belongsTo(City::class, 'shipping_city_id');
