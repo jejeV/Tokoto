@@ -8,8 +8,8 @@
         <div class="row gx-md-8 gx-xl-12 gy-12">
             <div class="col-lg-8">
                 <h1 class="display-5 text-center mb-6">Checkout</h1>
+                <div id="alert-container" class="mb-4"></div>
 
-                {{-- Notifikasi dari Session (Redirects) --}}
                 @if(session('success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         {{ session('success') }}
@@ -45,7 +45,7 @@
 
                 {{-- FORM INI AKAN DISUBMIT SECARA AJAX --}}
                 <form id="checkout-form" method="POST" class="needs-validation" novalidate>
-                    @csrf {{-- CSRF Token untuk AJAX, Laravel akan otomatis menambahkannya ke formData --}}
+                    @csrf
                     @guest
                         <div class="alert alert-info d-flex align-items-center mb-4" role="alert">
                             <i class="uil uil-info-circle me-2"></i> Sudah punya akun? <a href="{{ route('login') }}" class="alert-link ms-1">Masuk</a> untuk pengalaman checkout yang lebih cepat.
@@ -53,10 +53,11 @@
                     @endguest
 
                     <div class="card card-body shadow-lg mb-5">
-                        <h4 class="card-title text-center mb-4">Detail Pengiriman & Penagihan</h4>
-                        <div id="billing_address_form" class="row gy-3">
+                        <h4 class="card-title text-center mb-4">Detail Alamat (Penagihan & Pengiriman)</h4>
+                        <div class="row gy-3">
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
+                                    {{-- ID dan Name disesuaikan menjadi 'first_name' --}}
                                     <input id="first_name" type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" placeholder="Nama Depan" value="{{ old('first_name', $user->first_name ?? '') }}" required>
                                     <label for="first_name">Nama Depan*</label>
                                     <div class="invalid-feedback">Nama depan harus diisi.</div>
@@ -64,12 +65,14 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
+                                    {{-- ID dan Name disesuaikan menjadi 'last_name' --}}
                                     <input id="last_name" type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" placeholder="Nama Belakang" value="{{ old('last_name', $user->last_name ?? '') }}">
                                     <label for="last_name">Nama Belakang</label>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
+                                    {{-- ID dan Name disesuaikan menjadi 'email' --}}
                                     <input id="email" type="email" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="Email" value="{{ old('email', $user->email ?? '') }}" required>
                                     <label for="email">Email*</label>
                                     <div class="invalid-feedback">Email harus diisi dan valid.</div>
@@ -77,96 +80,55 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
-                                    <input id="phone" type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" placeholder="Nomor Telepon" value="{{ old('phone', $user->phone ?? '') }}" required>
+                                    {{-- ID dan Name disesuaikan menjadi 'phone' --}}
+                                    <input id="phone" type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" placeholder="Nomor Telepon" value="{{ old('phone', $user->phone_number ?? '') }}" required>
                                     <label for="phone">Nomor Telepon*</label>
                                     <div class="invalid-feedback">Nomor telepon harus diisi.</div>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
-                                    <input id="address_line1" type="text" name="address_line1" class="form-control @error('address_line1') is-invalid @enderror" placeholder="Alamat Baris 1" value="{{ old('address_line1', $user->address_line1 ?? '') }}" required>
+                                    {{-- ID dan Name disesuaikan menjadi 'address_line1' --}}
+                                    <input id="address_line1" type="text" name="address_line1" class="form-control @error('address_line1') is-invalid @enderror" placeholder="Alamat Baris 1" value="{{ old('address_line1', $user->address ?? '') }}" required>
                                     <label for="address_line1">Alamat Baris 1*</label>
                                     <div class="invalid-feedback">Alamat harus diisi.</div>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
-                                    <input id="address_line2" type="text" name="address_line2" class="form-control @error('address_line2') is-invalid @enderror" placeholder="Alamat Baris 2 (Opsional)" value="{{ old('address_line2', $user->address_line2 ?? '') }}">
+                                    {{-- ID dan Name disesuaikan menjadi 'address_line2' --}}
+                                    <input id="address_line2" type="text" name="address_line2" class="form-control @error('address_line2') is-invalid @enderror" placeholder="Alamat Baris 2 (Opsional)" value="{{ old('address_line2', '') }}">
                                     <label for="address_line2">Alamat Baris 2 (Opsional)</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                    <input id="province" type="text" name="province" class="form-control @error('province') is-invalid @enderror" placeholder="Provinsi" value="{{ old('province', $user->province ?? '') }}" required>
+                                    {{-- ID dan Name disesuaikan menjadi 'province' --}}
+                                    <input id="province" type="text" name="province" class="form-control @error('province') is-invalid @enderror" placeholder="Provinsi" value="{{ old('province', $user->province->name ?? '') }}" required>
                                     <label for="province">Provinsi*</label>
                                     <div class="invalid-feedback">Provinsi harus diisi.</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                    <input id="city" type="text" name="city" class="form-control @error('city') is-invalid @enderror" placeholder="Kota" value="{{ old('city', $user->city ?? '') }}" required>
+                                    {{-- ID dan Name disesuaikan menjadi 'city' --}}
+                                    <input id="city" type="text" name="city" class="form-control @error('city') is-invalid @enderror" placeholder="Kota" value="{{ old('city', $user->city->name ?? '') }}" required>
                                     <label for="city">Kota*</label>
                                     <div class="invalid-feedback">Kota harus diisi.</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
+                                    {{-- ID dan Name disesuaikan menjadi 'zip_code' --}}
                                     <input id="zip_code" type="text" name="zip_code" class="form-control @error('zip_code') is-invalid @enderror" placeholder="Kode Pos" value="{{ old('zip_code', $user->zip_code ?? '') }}" required>
                                     <label for="zip_code">Kode Pos*</label>
                                     <div class="invalid-feedback">Kode pos harus diisi.</div>
                                 </div>
                             </div>
-                            <div class="col-12">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="shipping_address_same_as_billing" name="shipping_address_same_as_billing" value="1" checked>
-                                    <label class="form-check-label" for="shipping_address_same_as_billing">
-                                        Alamat pengiriman sama dengan alamat penagihan
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Shipping Address Section (Hidden by default) --}}
-                        <div id="shipping_address_form" class="row gy-3 mt-4" style="display: none;">
-                            <hr class="my-4">
-                            <h5 class="card-title text-center mb-4">Alamat Pengiriman (Jika Berbeda)</h5>
-                            <div class="col-md-12">
-                                <div class="form-floating mb-4">
-                                    <input id="shipping_address_line1" type="text" name="shipping_address_line1" class="form-control @error('shipping_address_line1') is-invalid @enderror" placeholder="Alamat Baris 1" value="{{ old('shipping_address_line1', $user->shipping_address_line1 ?? '') }}">
-                                    <label for="shipping_address_line1">Alamat Baris 1*</label>
-                                    <div class="invalid-feedback">Alamat pengiriman harus diisi.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                                <div class="form-floating mb-4">
-                                    <input id="shipping_address_line2" type="text" name="shipping_address_line2" class="form-control @error('shipping_address_line2') is-invalid @enderror" placeholder="Alamat Baris 2 (Opsional)" value="{{ old('shipping_address_line2', $user->shipping_address_line2 ?? '') }}">
-                                    <label for="shipping_address_line2">Alamat Baris 2 (Opsional)</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating mb-4">
-                                    <input id="shipping_province" type="text" name="shipping_province" class="form-control @error('shipping_province') is-invalid @enderror" placeholder="Provinsi" value="{{ old('shipping_province', $user->shipping_province ?? '') }}">
-                                    <label for="shipping_province">Provinsi*</label>
-                                    <div class="invalid-feedback">Provinsi pengiriman harus diisi.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating mb-4">
-                                    <input id="shipping_city" type="text" name="shipping_city" class="form-control @error('shipping_city') is-invalid @enderror" placeholder="Kota" value="{{ old('shipping_city', $user->shipping_city ?? '') }}">
-                                    <label for="shipping_city">Kota*</label>
-                                    <div class="invalid-feedback">Kota pengiriman harus diisi.</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-floating mb-4">
-                                    <input id="shipping_zip_code" type="text" name="shipping_zip_code" class="form-control @error('shipping_zip_code') is-invalid @enderror" placeholder="Kode Pos" value="{{ old('shipping_zip_code', $user->shipping_zip_code ?? '') }}">
-                                    <label for="shipping_zip_code">Kode Pos*</label>
-                                    <div class="invalid-feedback">Kode pos pengiriman harus diisi.</div>
-                                </div>
-                            </div>
                         </div>
                     </div>
 
+                    {{-- Shipping Method --}}
                     <div class="card card-body shadow-lg mt-5">
                         <h4 class="card-title text-center mb-4">Metode Pengiriman</h4>
                         <div class="form-check mb-2">
@@ -275,17 +237,12 @@
 <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
 <script>
-jQuery(document).ready(function($) {
+jQuery(document).ready(function($) { // $ di sini akan merujuk ke jQuery
     const checkoutForm = document.getElementById('checkout-form');
     const placeOrderButton = document.getElementById('place-order-button');
     const loadingIndicator = document.getElementById('loading-indicator');
     const btnText = placeOrderButton.querySelector('.btn-text');
     const btnLoading = placeOrderButton.querySelector('.btn-loading');
-
-    // Element untuk alamat pengiriman jika berbeda
-    const shippingAddressCheckbox = document.getElementById('shipping_address_same_as_billing');
-    const shippingAddressForm = document.getElementById('shipping_address_form');
-    const shippingAddressFields = shippingAddressForm.querySelectorAll('input[type="text"]');
 
     // Fungsi untuk menampilkan loading state
     function showLoading() {
@@ -293,7 +250,6 @@ jQuery(document).ready(function($) {
         btnText.classList.add('d-none');
         btnLoading.classList.remove('d-none');
         loadingIndicator.style.display = 'block';
-        // Sembunyikan alert validasi Laravel Blade jika ada
         const backendErrors = document.querySelector('.backend-validation-errors');
         if (backendErrors) {
             backendErrors.style.display = 'none';
@@ -308,27 +264,23 @@ jQuery(document).ready(function($) {
         loadingIndicator.style.display = 'none';
     }
 
-    // Fungsi untuk menampilkan error AJAX
+    // Fungsi untuk menampilkan error AJAX (alert di atas form)
     function showError(message) {
-        const existingAlert = document.querySelector('.alert-checkout-error');
+        const existingAlert = document.querySelector('#alert-container .alert'); // Ubah selector
         if (existingAlert) {
             existingAlert.remove();
         }
 
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-danger alert-dismissible fade show alert-checkout-error';
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-
-        checkoutForm.insertBefore(alertDiv, checkoutForm.firstChild);
-        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const alertDiv = `<div class="alert alert-danger alert-dismissible fade show alert-checkout-error" role="alert">
+                            ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>`;
+        document.getElementById('alert-container').insertAdjacentHTML('afterbegin', alertDiv); // Masukkan ke alert-container
+        document.getElementById('alert-container').scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll ke alert
     }
 
     // Fungsi untuk menampilkan error validasi per field dari respons JSON
     function displayValidationErrors(errors) {
-        // Hapus semua invalid-feedback yang ada dan kelas is-invalid
         document.querySelectorAll('.is-invalid').forEach(el => {
             el.classList.remove('is-invalid');
         });
@@ -338,83 +290,50 @@ jQuery(document).ready(function($) {
 
         for (const fieldName in errors) {
             let inputField = document.getElementById(fieldName) || document.querySelector(`[name="${fieldName}"]`);
-            if (!inputField && fieldName.startsWith('shipping_') && shippingAddressCheckbox.checked) {
-                continue;
-            }
 
             if (inputField) {
                 inputField.classList.add('is-invalid');
-                const errorMessage = errors[fieldName].join('<br>'); // Gabungkan pesan error jika ada beberapa
+                const errorMessage = errors[fieldName].join('<br>');
                 const feedbackDiv = document.createElement('div');
                 feedbackDiv.className = 'invalid-feedback d-block';
                 feedbackDiv.innerHTML = errorMessage;
 
-                // Masukkan feedback div setelah input field
                 if (inputField.nextElementSibling && inputField.nextElementSibling.classList.contains('invalid-feedback')) {
-                    inputField.nextElementSibling.remove(); // Hapus yang lama jika ada
+                    inputField.nextElementSibling.remove();
                 }
                 inputField.parentNode.appendChild(feedbackDiv);
 
-                // Scroll ke field pertama yang error
-                if (!document.querySelector('.is-invalid:focus')) { // Hanya scroll jika belum ada field yang fokus
+                if (!document.querySelector('.is-invalid:focus')) {
                     inputField.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     inputField.focus();
                 }
             }
         }
+        showError('Terjadi kesalahan validasi. Mohon perbaiki input Anda.'); // Tampilkan juga alert umum di atas
     }
 
-    // Event listener untuk checkbox "Alamat pengiriman sama"
-    shippingAddressCheckbox.addEventListener('change', function() {
-        if (this.checked) {
-            shippingAddressForm.style.display = 'none';
-            // Nonaktifkan 'required' dan 'name' untuk field alamat pengiriman agar tidak terkirim/tervalidasi
-            shippingAddressFields.forEach(field => {
-                field.removeAttribute('required');
-                field.setAttribute('disabled', 'true'); // Penting agar tidak terkirim via form data
-                field.value = ''; // Kosongkan nilai saat disembunyikan
-                field.classList.remove('is-invalid'); // Hapus validasi visual
-            });
-            // Hapus feedback yang mungkin ada
-            shippingAddressForm.querySelectorAll('.invalid-feedback.d-block').forEach(el => el.remove());
-
-        } else {
-            shippingAddressForm.style.display = 'flex'; // Gunakan flex agar kolom tetap sejajar
-            // Aktifkan 'required' dan 'name' untuk field alamat pengiriman
-            shippingAddressFields.forEach(field => {
-                field.setAttribute('required', 'true');
-                field.removeAttribute('disabled');
-            });
-        }
-    });
-
-    // Panggil sekali saat load untuk mengatur state awal
-    shippingAddressCheckbox.dispatchEvent(new Event('change'));
-
-    $('#checkout-form').on('submit', function(e) { // Menggunakan jQuery untuk event submit
+    $('#checkout-form').on('submit', function(e) {
         e.preventDefault();
 
-        // Hapus semua notifikasi error sebelumnya
         $('.is-invalid').removeClass('is-invalid');
         $('.invalid-feedback.d-block').remove();
-        $('.alert-checkout-error').remove();
-        $('.backend-validation-errors').hide(); // Sembunyikan alert Laravel Blade
+        $('#alert-container').empty(); // Kosongkan alert container
+        $('.backend-validation-errors').hide();
 
-        // Validasi form HTML5 secara native (sebelum kirim AJAX)
         if (!checkoutForm.checkValidity()) {
-            e.stopPropagation(); // Hentikan event submit
-            checkoutForm.classList.add('was-validated'); // Tampilkan pesan validasi browser
+            e.stopPropagation();
+            checkoutForm.classList.add('was-validated');
             const firstInvalidField = checkoutForm.querySelector(':invalid');
             if (firstInvalidField) {
                 firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstInvalidField.focus();
             }
+            showError('Mohon lengkapi semua field yang wajib diisi.'); // Notifikasi umum jika validasi HTML5 gagal
             return;
         }
 
         showLoading();
 
-        // Serialize form data, jQuery secara otomatis menyertakan CSRF token dan mengabaikan disabled fields
         const formData = $(this).serialize();
 
         $.ajax({
@@ -429,7 +348,6 @@ jQuery(document).ready(function($) {
                     snap.pay(data.snap_token, {
                         onSuccess: function(result) {
                             console.log('Payment Success:', result);
-                            // Redirect ke halaman sukses setelah pembayaran berhasil
                             window.location.href = "{{ route('checkout.success') }}?order_id=" + data.order_id;
                         },
                         onPending: function(result) {
@@ -446,16 +364,7 @@ jQuery(document).ready(function($) {
                         }
                     });
                 } else if (data.errors) {
-                    // Ini akan menangani error validasi dari controller (jika response status 200 tapi ada errors)
-                    let errorMessage = 'Terjadi kesalahan validasi:<ul>';
-                    Object.values(data.errors).forEach(errorArray => {
-                        errorArray.forEach(err => {
-                            errorMessage += `<li>${err}</li>`;
-                        });
-                    });
-                    errorMessage += '</ul>';
-                    showError(errorMessage);
-                    displayValidationErrors(data.errors); // Tampilkan error di masing-masing field
+                    displayValidationErrors(data.errors);
                 } else {
                     showError(data.message || 'Terjadi kesalahan saat memproses pesanan. Silakan coba lagi.');
                 }
@@ -465,15 +374,6 @@ jQuery(document).ready(function($) {
                 console.error('AJAX Error:', textStatus, errorThrown, jqXHR);
 
                 if (jqXHR.responseJSON && jqXHR.responseJSON.errors) {
-                    // Ini akan menangani error validasi dari Laravel saat status 422 (Unprocessable Entity)
-                    let errorMessage = 'Terjadi kesalahan validasi:<ul>';
-                    Object.values(jqXHR.responseJSON.errors).forEach(errorArray => {
-                        errorArray.forEach(err => {
-                            errorMessage += `<li>${err}</li>`;
-                        });
-                    });
-                    errorMessage += '</ul>';
-                    showError(errorMessage);
                     displayValidationErrors(jqXHR.responseJSON.errors);
                 } else if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
                     showError(jqXHR.responseJSON.message);
@@ -484,7 +384,6 @@ jQuery(document).ready(function($) {
         });
     });
 
-    // JavaScript untuk memperbarui biaya pengiriman dan total akhir secara dinamis
     const shippingRadios = document.querySelectorAll('input[name="shipping_method"]');
     const orderSubtotalElement = document.getElementById('order-subtotal');
     const orderShippingElement = document.getElementById('order-shipping');
@@ -498,13 +397,11 @@ jQuery(document).ready(function($) {
             }
         });
 
-        // Ambil subtotal dari teks, hapus 'Rp. ' dan titik ribuan untuk parsing
         const subtotalText = orderSubtotalElement.textContent.replace('Rp. ', '').replace(/\./g, '');
-        const currentSubtotal = parseFloat(subtotalText); // Pastikan ini adalah angka valid
+        const currentSubtotal = parseFloat(subtotalText);
 
         const newGrandTotal = currentSubtotal + selectedShippingCost;
 
-        // Format kembali ke Rupiah untuk ditampilkan
         orderShippingElement.textContent = 'Rp. ' + new Intl.NumberFormat('id-ID').format(selectedShippingCost);
         orderGrandTotalElement.textContent = 'Rp. ' + new Intl.NumberFormat('id-ID').format(newGrandTotal);
     }

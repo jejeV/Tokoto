@@ -5,6 +5,7 @@ use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -61,9 +62,6 @@ Route::post('/midtrans-callback', [CheckoutController::class, 'midtransCallback'
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
     ->name('midtrans.callback');
 
-// Route::prefix('user')->name('user.')->group(function () {
-//     Route::get('/dashboard', [UserController::class, 'dashboard'])->name('dashboard');
-//     Route::get('/profile/edit', [UserController::class, 'editProfile'])->name('profile.edit');
-//     Route::post('/profile/update', [UserController::class, 'updateProfile'])->name('profile.update');
-//     Route::get('/addresses', [UserController::class, 'manageAddresses'])->name('addresses');
-// });
+Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile/update-info', [ProfileController::class, 'update'])->name('profile.update.info');
+    Route::put('/profile/change-password', [ProfileController::class, 'changePassword'])->name('profile.update.password');

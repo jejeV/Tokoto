@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Cart;
@@ -10,6 +12,8 @@ use App\Models\OrderItem;
 use App\Models\ProductVariant;
 use App\Models\Size;
 use App\Models\Color;
+use App\Models\Province;
+use App\Models\City;
 use Midtrans\Snap;
 use Midtrans\Config;
 use Midtrans\Notification;
@@ -82,24 +86,13 @@ class CheckoutController extends Controller
             'phone' => 'required|string|max:20',
             'address_line1' => 'required|string|max:255',
             'address_line2' => 'nullable|string|max:255',
-            'province' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
+            'province' => 'required|string|max:255', // Ini adalah nama provinsi, perlu di-lookup ID
+            'city' => 'required|string|max:255',     // Ini adalah nama kota, perlu di-lookup ID
             'zip_code' => 'required|string|max:10',
             'shipping_method' => 'required|in:Pengiriman Standar,Pengiriman Ekspres',
             'payment_method' => 'required|in:midtrans',
-            'shipping_address_same_as_billing' => 'boolean',
+            // 'shipping_address_same_as_billing' field dan validasi kondisionalnya dihapus
         ];
-
-        if (!$request->input('shipping_address_same_as_billing')) {
-            $rules['shipping_first_name'] = 'required|string|max:255';
-            $rules['shipping_last_name'] = 'nullable|string|max:255';
-            $rules['shipping_phone_number'] = 'required|string|max:20';
-            $rules['shipping_address_line1'] = 'required|string|max:255';
-            $rules['shipping_address_line2'] = 'nullable|string|max:255';
-            $rules['shipping_province'] = 'required|string|max:255';
-            $rules['shipping_city'] = 'required|string|max:255';
-            $rules['shipping_zip_code'] = 'required|string|max:10';
-        }
 
         $validator = \Validator::make($request->all(), $rules);
 
@@ -141,6 +134,7 @@ class CheckoutController extends Controller
 
                 $itemDetails[] = [
                     'product_id' => $item->product_id,
+                    'product_variant_id' => $item->product_variant_id,
                     'product_name' => $productName,
                     'selected_size' => $variantSize,
                     'selected_color' => $variantColor,
@@ -150,7 +144,7 @@ class CheckoutController extends Controller
                 ];
 
                 $midtransItems[] = [
-                    'id' => $item->product_id,
+                    'id' => $item->product_variant_id ?? $item->product_id,
                     'price' => (int) $item->price,
                     'quantity' => (int) $item->quantity,
                     'name' => $productName,
@@ -174,69 +168,137 @@ class CheckoutController extends Controller
 
             DB::beginTransaction();
 
-            $order = new Order();
-            $order->user_id = $user->id;
-            $order->order_number = 'ORD-' . time() . '-' . uniqid();
-            $order->total_amount = $orderTotal;
-            $order->subtotal_amount = $cartSubtotal;
-            $order->discount_amount = 0.00;
-            $order->shipping_method = $request->shipping_method;
-            $order->shipping_cost = $shippingCost;
-            $order->payment_method = $request->payment_method;
-            $order->order_status = 'initiated';
-            $order->payment_status = 'unpaid';
-            $order->midtrans_transaction_id = null;
-            $order->midtrans_payment_type = null;
-            $order->midtrans_gross_amount = null;
-            $order->midtrans_masked_card = null;
-            $order->midtrans_bank = null;
-            $order->midtrans_va_numbers = null;
-            $order->payment_redirect_url = null;
-            $order->midtrans_snap_token = null;
+            // Cek apakah ada pesanan yang "initiated" atau "pending" untuk pengguna ini
+            $order = Order::where('user_id', $user->id)
+                          ->whereIn('order_status', ['initiated', 'waiting_payment', 'pending_challenge'])
+                          ->whereIn('payment_status', ['unpaid', 'pending', 'challenge'])
+                          ->latest()
+                          ->first();
 
-            $order->billing_first_name = $request->first_name;
-            $order->billing_last_name = $request->last_name;
-            $order->billing_email = $request->email;
-            $order->billing_phone = $request->phone;
-            $order->billing_address_line_1 = $request->address_line1;
-            $order->billing_address_line_2 = $request->address_line2; // Corrected from address_address2
-            $order->billing_zip_code = $request->zip_code;
+            // Ambil ID provinsi dan kota dari nama yang di-request (untuk penagihan dan pengiriman)
+            $billingProvince = Province::where('name', $request->province)->first();
+            $billingCity = City::where('name', $request->city)->where('province_id', $billingProvince->id ?? null)->first();
 
-            if ($request->shipping_address_same_as_billing) {
+            if ($order) {
+                // Jika pesanan ditemukan, gunakan kembali pesanan tersebut
+                Log::info('Menggunakan kembali pesanan yang sudah ada: ' . $order->order_number . ' untuk pengguna ' . $user->id);
+                $order->orderItems()->delete(); // Hapus item lama
+
+                $order->total_amount = $orderTotal;
+                $order->subtotal_amount = $cartSubtotal;
+                $order->discount_amount = 0.00;
+                $order->shipping_method = $request->shipping_method;
+                $order->shipping_cost = $shippingCost;
+                $order->payment_method = $request->payment_method;
+                $order->order_status = 'initiated';
+                $order->payment_status = 'unpaid';
+
+                $order->midtrans_snap_token = null;
+                $order->midtrans_transaction_id = null;
+                $order->midtrans_payment_type = null;
+                $order->midtrans_gross_amount = null;
+                $order->midtrans_masked_card = null;
+                $order->midtrans_bank = null;
+                $order->midtrans_va_numbers = null;
+                $order->payment_redirect_url = null;
+
+                $order->billing_first_name = $request->first_name;
+                $order->billing_last_name = $request->last_name;
+                $order->billing_email = $request->email;
+                $order->billing_phone = $request->phone;
+                $order->billing_address_line_1 = $request->address_line1;
+                $order->billing_address_line_2 = $request->address_line2;
+                $order->billing_province_id = $billingProvince->id ?? null;
+                $order->billing_city_id = $billingCity->id ?? null;
+                $order->billing_zip_code = $request->zip_code;
+
+                // Alamat Pengiriman selalu sama dengan Penagihan
                 $order->shipping_first_name = $request->first_name;
                 $order->shipping_last_name = $request->last_name;
                 $order->shipping_email = $request->email;
                 $order->shipping_phone_number = $request->phone;
                 $order->shipping_address_line_1 = $request->address_line1;
                 $order->shipping_address_line_2 = $request->address_line2;
+                $order->shipping_province_id = $billingProvince->id ?? null; // Gunakan ID provinsi penagihan
+                $order->shipping_city_id = $billingCity->id ?? null;     // Gunakan ID kota penagihan
                 $order->shipping_zip_code = $request->zip_code;
+
+                $order->save();
+
+                foreach ($itemDetails as $itemData) {
+                    $orderItem = new OrderItem();
+                    $orderItem->order_id = $order->id;
+                    $orderItem->product_id = $itemData['product_id'];
+                    $orderItem->product_variant_id = $itemData['product_variant_id'];
+                    $orderItem->product_name = $itemData['product_name'];
+                    $orderItem->selected_size = $itemData['selected_size'];
+                    $orderItem->selected_color = $itemData['selected_color'];
+                    $orderItem->quantity = $itemData['quantity'];
+                    $orderItem->price_per_item = $itemData['price_per_item'];
+                    $orderItem->total_price = $itemData['total_price'];
+                    $orderItem->save();
+                }
+
             } else {
-                $order->shipping_first_name = $request->shipping_first_name;
-                $order->shipping_last_name = $request->shipping_last_name;
+                // Jika tidak ada pesanan yang belum dibayar, buat pesanan baru
+                Log::info('Membuat pesanan baru untuk pengguna ' . $user->id);
+                $order = new Order();
+                $order->user_id = $user->id;
+                $order->order_number = 'ORD-' . time() . '-' . uniqid();
+                $order->total_amount = $orderTotal;
+                $order->subtotal_amount = $cartSubtotal;
+                $order->discount_amount = 0.00;
+                $order->shipping_method = $request->shipping_method;
+                $order->shipping_cost = $shippingCost;
+                $order->payment_method = $request->payment_method;
+                $order->order_status = 'initiated';
+                $order->payment_status = 'unpaid';
+                $order->midtrans_transaction_id = null;
+                $order->midtrans_payment_type = null;
+                $order->midtrans_gross_amount = null;
+                $order->midtrans_masked_card = null;
+                $order->midtrans_bank = null;
+                $order->midtrans_va_numbers = null;
+                $order->payment_redirect_url = null;
+                $order->midtrans_snap_token = null;
+
+                $order->billing_first_name = $request->first_name;
+                $order->billing_last_name = $request->last_name;
+                $order->billing_email = $request->email;
+                $order->billing_phone = $request->phone;
+                $order->billing_address_line_1 = $request->address_line1;
+                $order->billing_address_line_2 = $request->address_line2;
+                $order->billing_province_id = $billingProvince->id ?? null;
+                $order->billing_city_id = $billingCity->id ?? null;
+                $order->billing_zip_code = $request->zip_code;
+
+                // Alamat Pengiriman selalu sama dengan Penagihan
+                $order->shipping_first_name = $request->first_name;
+                $order->shipping_last_name = $request->last_name;
                 $order->shipping_email = $request->email;
-                $order->shipping_phone_number = $request->shipping_phone_number;
-                $order->shipping_address_line_1 = $request->shipping_address_line1;
-                $order->shipping_address_line_2 = $request->shipping_address_line2;
-                $order->shipping_zip_code = $request->shipping_zip_code;
+                $order->shipping_phone_number = $request->phone;
+                $order->shipping_address_line_1 = $request->address_line1;
+                $order->shipping_address_line_2 = $request->address_line2;
+                $order->shipping_province_id = $billingProvince->id ?? null;
+                $order->shipping_city_id = $billingCity->id ?? null;
+                $order->shipping_zip_code = $request->zip_code;
+
+                $order->save();
+
+                foreach ($itemDetails as $itemData) {
+                    $orderItem = new OrderItem();
+                    $orderItem->order_id = $order->id;
+                    $orderItem->product_id = $itemData['product_id'];
+                    $orderItem->product_variant_id = $itemData['product_variant_id'];
+                    $orderItem->product_name = $itemData['product_name'];
+                    $orderItem->selected_size = $itemData['selected_size'];
+                    $orderItem->selected_color = $itemData['selected_color'];
+                    $orderItem->quantity = $itemData['quantity'];
+                    $orderItem->price_per_item = $itemData['price_per_item'];
+                    $orderItem->total_price = $itemData['total_price'];
+                    $orderItem->save();
+                }
             }
-
-            $order->save();
-
-            foreach ($itemDetails as $itemData) {
-                $orderItem = new OrderItem();
-                $orderItem->order_id = $order->id;
-                $orderItem->product_id = $itemData['product_id'];
-                $orderItem->product_name = $itemData['product_name'];
-                $orderItem->selected_size = $itemData['selected_size'];
-                $orderItem->selected_color = $itemData['selected_color'];
-                $orderItem->quantity = $itemData['quantity'];
-                $orderItem->price_per_item = $itemData['price_per_item'];
-                $orderItem->total_price = $itemData['total_price'];
-                $orderItem->save();
-            }
-
-
-            DB::commit();
 
             Config::$serverKey = config('midtrans.server_key');
             Config::$isProduction = config('midtrans.is_production');
@@ -259,17 +321,18 @@ class CheckoutController extends Controller
                         'email' => $order->billing_email,
                         'phone' => $order->billing_phone,
                         'address' => $order->billing_address_line_1 . ($order->billing_address_line_2 ? ', ' . $order->billing_address_line_2 : ''),
-                        'city' => $request->city,
+                        'city' => $request->city, // Menggunakan nama kota dari request
                         'postal_code' => $order->billing_zip_code,
                         'country_code' => 'IDN',
                     ],
+                    // Shipping address sekarang mengambil dari billing address (selalu)
                     'shipping_address' => [
                         'first_name' => $order->shipping_first_name,
                         'last_name' => $order->shipping_last_name,
                         'email' => $order->shipping_email,
                         'phone' => $order->shipping_phone_number,
                         'address' => $order->shipping_address_line_1 . ($order->shipping_address_line_2 ? ', ' . $order->shipping_address_line_2 : ''),
-                        'city' => $request->shipping_city,
+                        'city' => $request->city, // Menggunakan nama kota dari request (sama dengan billing)
                         'postal_code' => $order->shipping_zip_code,
                         'country_code' => 'IDN',
                     ],
@@ -283,9 +346,12 @@ class CheckoutController extends Controller
             ];
 
             $snapToken = Snap::getSnapToken($params);
+
             $order->midtrans_snap_token = $snapToken;
             $order->payment_redirect_url = $snapToken;
             $order->save();
+
+            DB::commit();
 
             return response()->json(['success' => true, 'snap_token' => $snapToken, 'order_id' => $order->id]);
 
@@ -298,6 +364,11 @@ class CheckoutController extends Controller
 
     public function midtransCallback(Request $request)
     {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+
         $notif = new Notification();
 
         $transactionStatus = $notif->transaction_status;
@@ -308,7 +379,7 @@ class CheckoutController extends Controller
         $order = Order::where('order_number', $orderId)->first();
 
         if (!$order) {
-            Log::error("Order not found for order_id: " . $orderId);
+            Log::error("Midtrans Callback: Order not found for order_number: " . $orderId);
             return response()->json(['message' => 'Order not found'], 404);
         }
 
@@ -322,22 +393,22 @@ class CheckoutController extends Controller
                 $order->payment_status = 'success';
                 $order->order_status = 'processing';
             }
-        } else if ($transactionStatus == 'settlement') {
+        } elseif ($transactionStatus == 'settlement') {
             $order->payment_status = 'success';
             $order->order_status = 'processing';
-        } else if ($transactionStatus == 'pending') {
+        } elseif ($transactionStatus == 'pending') {
             $order->payment_status = 'pending';
             $order->order_status = 'waiting_payment';
-        } else if ($transactionStatus == 'deny') {
+        } elseif ($transactionStatus == 'deny') {
             $order->payment_status = 'denied';
             $order->order_status = 'cancelled';
-        } else if ($transactionStatus == 'expire') {
+        } elseif ($transactionStatus == 'expire') {
             $order->payment_status = 'expired';
             $order->order_status = 'cancelled';
-        } else if ($transactionStatus == 'cancel') {
+        } elseif ($transactionStatus == 'cancel') {
             $order->payment_status = 'cancelled';
             $order->order_status = 'cancelled';
-        } else if ($transactionStatus == 'refund' || $transactionStatus == 'partial_refund') {
+        } elseif ($transactionStatus == 'refund' || $transactionStatus == 'partial_refund') {
             $order->payment_status = $transactionStatus;
             $order->order_status = 'refunded';
         }
@@ -354,7 +425,6 @@ class CheckoutController extends Controller
 
         if ($order->payment_status === 'success' && ($previousPaymentStatus !== 'success' && $previousPaymentStatus !== 'processing')) {
             $this->updateStock($order);
-            // Hapus keranjang belanja di sini, setelah pembayaran dikonfirmasi sukses
             Cart::where('user_id', $order->user_id)->delete();
             Log::info("Cart cleared for user " . $order->user_id . " after successful payment for order " . $order->order_number);
         }
@@ -364,7 +434,7 @@ class CheckoutController extends Controller
 
     protected function updateStock(Order $order)
     {
-        foreach ($order->items as $item) {
+        foreach ($order->orderItems as $item) {
             $sizeId = null;
             if ($item->selected_size) {
                 $size = Size::where('name', $item->selected_size)->first();
@@ -397,24 +467,35 @@ class CheckoutController extends Controller
                 if ($productVariant->stock >= $item->quantity) {
                     $productVariant->stock -= $item->quantity;
                     $productVariant->save();
-                    Log::info("Stock updated for variant ID: " . $productVariant->id . " by " . $item->quantity);
+                    Log::info("Stock updated for variant ID: " . $productVariant->id . " by " . $item->quantity . " for order " . $order->order_number);
                 } else {
                     Log::warning("Insufficient stock for product variant ID: " . $productVariant->id . ". Ordered: " . $item->quantity . ", Available: " . $productVariant->stock . ". Order " . $order->order_number . " may have issues.");
                 }
             } else {
-                Log::error("Product variant not found for item ID: " . $item->id . " (Product ID: " . $item->product_id . ", Size: " . $item->selected_size . ", Color: " . $item->selected_color . "). Order " . $order->order_number);
+                Log::error("Product variant not found for order item ID: " . $item->id . " (Product ID: " . $item->product_id . ", Size: " . $item->selected_size . ", Color: " . $item->selected_color . "). Order " . $order->order_number);
             }
         }
     }
 
     public function success(Request $request)
     {
-        $orderId = $request->query('order_id');
         $order = null;
+
+        $orderId = $request->query('order_id');
+
         if ($orderId) {
             $order = Order::find($orderId);
+            if (!$order) {
+                Log::warning("Checkout Success: Order with ID " . $orderId . " not found in database.");
+                return redirect()->route('home')->with('error', 'Pesanan tidak ditemukan.');
+            }
+            $order->load('orderItems');
+        } else {
+            Log::warning("Checkout Success: order_id is missing from the query string.");
+            return redirect()->route('home')->with('error', 'Detail pesanan tidak dapat dimuat.');
         }
-        return view('success', compact('order'));
+
+        return view('checkout.success', compact('order'));
     }
 
     public function pending(Request $request)
@@ -441,8 +522,8 @@ class CheckoutController extends Controller
     {
         $user = Auth::user();
         $orders = Order::where('user_id', $user->id)
-                         ->orderBy('created_at', 'desc')
-                         ->paginate(10);
+                        ->orderBy('created_at', 'desc')
+                        ->paginate(10);
 
         return view('order', compact('orders'));
     }
@@ -456,5 +537,20 @@ class CheckoutController extends Controller
         $order->load('orderItems');
 
         return view('orderdetail', compact('order'));
+    }
+
+    public function testMidtransConnection()
+    {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+
+        try {
+            $status = \Midtrans\Transaction::status('test-transaction-id-from-sandbox');
+            return response()->json(['success' => true, 'message' => 'Koneksi Midtrans berhasil. Detail status dummy: ' . json_encode($status)], 200);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Koneksi Midtrans gagal: ' . $e->getMessage()], 500);
+        }
     }
 }

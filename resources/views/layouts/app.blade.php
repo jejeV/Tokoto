@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="{{ asset('assets/home/css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/home/css/colors/yellow.css') }}">
   <link rel="preload" href="{{ asset('assets/home/css/fonts/urbanist.css') }}" as="style" onload="this.rel='stylesheet'">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   @yield('styles')
 </head>
 
