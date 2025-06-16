@@ -44,8 +44,8 @@
                             <div class="swiper-slide">
                                 <figure class="rounded">
                                     <img id="main-product-image"
-                                        src="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }}"
-                                        srcset="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }} 2x"
+                                        src="{{ asset('assets/home/img/nike/' . ($defaultVariant->image ?? $product->image)) }}"
+                                        srcset="{{ asset('assets/home/img/nike/' . ($defaultVariant->image ?? $product->image)) }} 2x"
                                         alt="{{ $product->name }}" />
                                     <a class="item-link"
                                         href="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }}"
@@ -244,11 +244,11 @@
                 if (currentVariant) {
                     productPrice.textContent = `Rp. ${currentVariant.price.toLocaleString('id-ID')}`;
                     if (currentVariant.image) {
-                        productMainImage.src = `{{ asset('assets/home/img/photos/') }}/${currentVariant.image}`;
-                        productMainImage.srcset = `{{ asset('assets/home/img/photos/') }}/${currentVariant.image} 2x`;
+                        productMainImage.src = `{{ asset('assets/home/img/nike/') }}/${currentVariant.image}`;
+                        productMainImage.srcset = `{{ asset('assets/home/img/nike/') }}/${currentVariant.image} 2x`;
                     } else if (defaultVariantData.image) {
-                        productMainImage.src = `{{ asset('assets/home/img/photos/') }}/${defaultVariantData.image}`;
-                        productMainImage.srcset = `{{ asset('assets/home/img/photos/') }}/${defaultVariantData.image} 2x`;
+                        productMainImage.src = `{{ asset('assets/home/img/nike/') }}/${defaultVariantData.image}`;
+                        productMainImage.srcset = `{{ asset('assets/home/img/nike/') }}/${defaultVariantData.image} 2x`;
                     }
                     selectedProductVariantIdInput.value = currentVariant.id || '';
                     hiddenSelectedSizeIdInput.value = selectedSizeId || '';

@@ -57,7 +57,7 @@
                                     <tr id="cart-item-{{ $item->id }}">
                                         <td class="product-item text-start">
                                             <div class="product-thumb">
-                                                <img src="{{ asset('assets/home/img/photos/' . $item->product->image) }}" alt="{{ $item->product->name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                                                <img src="{{ asset('assets/home/img/nike/' . $item->product->image) }}" alt="{{ $item->product->name }}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />
                                             </div>
                                             <div class="product-info">
                                                 <h5 class="product-title">{{ $item->product->name }}</h5>

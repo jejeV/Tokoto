@@ -38,8 +38,8 @@
 
                     <div class="project item col-md-6 col-xl-4">
                         <figure class="rounded mb-6">
-                            <img src="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }}"
-                                 srcset="{{ asset('assets/home/img/photos/' . ($defaultVariant->image ?? $product->image)) }} 2x"
+                            <img src="{{ asset('assets/home/img/nike/' . ($defaultVariant->image ?? $product->image)) }}"
+                                 srcset="{{ asset('assets/home/img/nike/' . ($defaultVariant->image ?? $product->image)) }} 2x"
                                  alt="{{ $product->name }}" />
 
                             @if ($totalProductStock == 0)

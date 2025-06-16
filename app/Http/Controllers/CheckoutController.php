@@ -86,12 +86,11 @@ class CheckoutController extends Controller
             'phone' => 'required|string|max:20',
             'address_line1' => 'required|string|max:255',
             'address_line2' => 'nullable|string|max:255',
-            'province' => 'required|string|max:255', // Ini adalah nama provinsi, perlu di-lookup ID
-            'city' => 'required|string|max:255',     // Ini adalah nama kota, perlu di-lookup ID
+            'province' => 'required|string|max:255',
+            'city' => 'required|string|max:255',
             'zip_code' => 'required|string|max:10',
             'shipping_method' => 'required|in:Pengiriman Standar,Pengiriman Ekspres',
             'payment_method' => 'required|in:midtrans',
-            // 'shipping_address_same_as_billing' field dan validasi kondisionalnya dihapus
         ];
 
         $validator = \Validator::make($request->all(), $rules);
@@ -168,7 +167,6 @@ class CheckoutController extends Controller
 
             DB::beginTransaction();
 
-            // Cek apakah ada pesanan yang "initiated" atau "pending" untuk pengguna ini
             $order = Order::where('user_id', $user->id)
                           ->whereIn('order_status', ['initiated', 'waiting_payment', 'pending_challenge'])
                           ->whereIn('payment_status', ['unpaid', 'pending', 'challenge'])
@@ -180,7 +178,6 @@ class CheckoutController extends Controller
             $billingCity = City::where('name', $request->city)->where('province_id', $billingProvince->id ?? null)->first();
 
             if ($order) {
-                // Jika pesanan ditemukan, gunakan kembali pesanan tersebut
                 Log::info('Menggunakan kembali pesanan yang sudah ada: ' . $order->order_number . ' untuk pengguna ' . $user->id);
                 $order->orderItems()->delete(); // Hapus item lama
 
@@ -212,7 +209,6 @@ class CheckoutController extends Controller
                 $order->billing_city_id = $billingCity->id ?? null;
                 $order->billing_zip_code = $request->zip_code;
 
-                // Alamat Pengiriman selalu sama dengan Penagihan
                 $order->shipping_first_name = $request->first_name;
                 $order->shipping_last_name = $request->last_name;
                 $order->shipping_email = $request->email;
@@ -240,7 +236,6 @@ class CheckoutController extends Controller
                 }
 
             } else {
-                // Jika tidak ada pesanan yang belum dibayar, buat pesanan baru
                 Log::info('Membuat pesanan baru untuk pengguna ' . $user->id);
                 $order = new Order();
                 $order->user_id = $user->id;
@@ -272,7 +267,6 @@ class CheckoutController extends Controller
                 $order->billing_city_id = $billingCity->id ?? null;
                 $order->billing_zip_code = $request->zip_code;
 
-                // Alamat Pengiriman selalu sama dengan Penagihan
                 $order->shipping_first_name = $request->first_name;
                 $order->shipping_last_name = $request->last_name;
                 $order->shipping_email = $request->email;

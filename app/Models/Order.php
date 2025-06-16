@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\OrderItem;
 use App\Models\User;
 use App\Models\Province;
@@ -60,7 +62,6 @@ class Order extends Model
     ];
 
 
-    // Definisi relasi: Sebuah Order dimiliki oleh satu User
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -89,5 +90,15 @@ class Order extends Model
     public function shippingCity()
     {
         return $this->belongsTo(City::class, 'shipping_city_id');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function histories()
+    {
+    return $this->hasMany(OrderHistory::class)->latest();
     }
 }
