@@ -28,45 +28,48 @@
         </a>
         <ul class="menu-sub">
           <li class="menu-item {{ request()->is('admin/products') ? 'active' : '' }}">
-            <a href="" class="menu-link">
+            <a href="{{ route('admin.products.index') }}" class="menu-link">
               <div>Daftar Produk</div>
-            </a>
-          </li>
-          <li class="menu-item {{ request()->is('admin/products/create') ? 'active' : '' }}">
-            <a href="" class="menu-link">
-              <div>Tambah Produk</div>
-            </a>
-          </li>
-          <li class="menu-item {{ request()->is('admin/products/categories') ? 'active' : '' }}">
-            <a href="" class="menu-link">
-              <div>Kategori</div>
             </a>
           </li>
         </ul>
       </li>
 
       <!-- Pesanan -->
-      <li class="menu-item {{ request()->is('admin/orders*') ? 'active' : '' }}">
-        <a href="" class="menu-link">
+      <li class="menu-item {{ request()->is('admin/orders*') ? 'active open' : '' }}">
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
           <i class="menu-icon tf-icons bx bx-cart"></i>
           <div>Pesanan</div>
         </a>
+        <ul class="menu-sub">
+          <li class="menu-item {{ request()->is('admin/orders') ? 'active' : '' }}">
+            <a href="{{ route('admin.orders.index') }}" class="menu-link">
+              <div>Daftar Pesanan</div>
+            </a>
+          </li>
+          <!-- Jika punya route untuk export/laporan -->
+          <li class="menu-item {{ request()->is('admin/orders/export*') ? 'active' : '' }}">
+            <a href="{{ route('admin.orders.export.excel') }}" class="menu-link">
+              <div>Export Excel</div>
+            </a>
+          </li>
+        </ul>
       </li>
 
       <!-- Pelanggan -->
-      <li class="menu-item {{ request()->is('admin/customers*') ? 'active' : '' }}">
-        <a href="" class="menu-link">
+      <li class="menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+        <a href="{{ route('admin.users.index') }}" class="menu-link">
           <i class="menu-icon tf-icons bx bx-user"></i>
           <div>Pelanggan</div>
         </a>
       </li>
 
-      <!-- Laporan -->
-      <li class="menu-item {{ request()->is('admin/reports*') ? 'active' : '' }}">
-        <a href="" class="menu-link">
-          <i class="menu-icon tf-icons bx bx-bar-chart"></i>
-          <div>Laporan</div>
+      <!-- Pengaturan -->
+      <li class="menu-item {{ request()->is('admin/settings*') ? 'active' : '' }}">
+        <a href="{{ route('admin.settings.index') }}" class="menu-link">
+          <i class="menu-icon tf-icons bx bx-cog"></i>
+          <div>Pengaturan</div>
         </a>
       </li>
     </ul>
-  </aside>
+</aside>

@@ -35,7 +35,7 @@ class User extends Authenticatable
         'zip_code',
         'phone_number',
         'first_name',
-        'last_name',  
+        'last_name',
     ];
 
     /**
@@ -96,5 +96,10 @@ class User extends Authenticatable
     public function addresses()
     {
         return $this->hasMany(Address::class);
+    }
+
+    public function cartItems()
+    {
+        return $this->hasMany(Cart::class);
     }
 }

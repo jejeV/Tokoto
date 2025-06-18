@@ -10,6 +10,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AdminProductController;
+use App\Http\Controllers\Admin\OrderController;
+use App\Http\Controllers\Admin\AdminUserController; // Pastikan ini di-import jika digunakan
+use App\Http\Controllers\Admin\AdminSettingController; // Pastikan ini di-import jika digunakan
 
 /*-------------------------------------------------------------------------
 | Public Routes
@@ -68,38 +71,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         /*-------------------------------------------------------------------------
-        | Product Management Routes (Improved for modal-based CRUD)
+        | Product Management Routes
         |------------------------------------------------------------------------*/
         Route::prefix('products')->name('products.')->group(function () {
-            // Main CRUD Routes
             Route::get('/', [AdminProductController::class, 'index'])->name('index');
             Route::get('/create', [AdminProductController::class, 'create'])->name('create');
             Route::post('/', [AdminProductController::class, 'store'])->name('store');
-
-            // Show route for AJAX (getting product data for modal)
             Route::get('/{product}', [AdminProductController::class, 'show'])->name('show');
-
-            // Edit route with AJAX support
             Route::get('/{product}/edit', [AdminProductController::class, 'edit'])->name('edit');
-
-            // Update route with proper HTTP methods
             Route::match(['PUT', 'PATCH', 'POST'], '/{product}', [AdminProductController::class, 'update'])
                 ->name('update');
-
-            // Delete route
             Route::delete('/{product}', [AdminProductController::class, 'destroy'])->name('destroy');
-
-            // Additional utility routes for AJAX
             Route::get('/form/data', [AdminProductController::class, 'getFormData'])->name('form.data');
-
-            // Stock management routes
             Route::post('/{id}/update-stock/{type}', [AdminProductController::class, 'updateStock'])
                 ->name('update.stock')
                 ->where('type', 'product|variant');
 
-            /*-------------------------------------------------------------------------
-            | Variant Management Routes (Optional - if you want separate variant endpoints)
-            |------------------------------------------------------------------------*/
+            /* Variant Management */
             Route::prefix('variants')->name('variants.')->group(function () {
                 Route::post('/', [AdminProductController::class, 'storeVariant'])->name('store');
                 Route::get('/{variant}', [AdminProductController::class, 'showVariant'])->name('show');
@@ -109,14 +97,28 @@ Route::middleware('auth')->group(function () {
         });
 
         /*-------------------------------------------------------------------------
-        | Additional Admin Routes (for future expansion)
+        | Order Management Routes (Updated)
         |------------------------------------------------------------------------*/
         Route::prefix('orders')->name('orders.')->group(function () {
-            Route::get('/', [AdminOrderController::class, 'index'])->name('index');
-            Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
-            Route::patch('/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('update.status');
+            Route::get('/', [OrderController::class, 'index'])->name('index');
+            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+
+            // Status Management
+            Route::post('/{order}/status', [OrderController::class, 'updateStatus'])
+                ->name('updatestatus');
+            Route::post('/{order}/payment-status', [OrderController::class, 'updatePaymentStatus'])
+                ->name('update.payment-status');
+
+            // Export Functions
+            Route::get('/{order}/export/pdf', [OrderController::class, 'exportPdf'])
+                ->name('export.pdf');
+            Route::get('/export/excel', [OrderController::class, 'exportExcel'])
+                ->name('export.excel');
         });
 
+        /*-------------------------------------------------------------------------
+        | Additional Admin Routes
+        |------------------------------------------------------------------------*/
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
@@ -129,8 +131,9 @@ Route::middleware('auth')->group(function () {
         });
     });
 
+
     /*-------------------------------------------------------------------------
-    | Checkout & Order Routes
+    | Checkout & Order Routes (Customer)
     |------------------------------------------------------------------------*/
     Route::prefix('checkout')->name('checkout.')->group(function () {
         Route::get('/', [CheckoutController::class, 'showCheckoutForm'])->name('show');
@@ -138,6 +141,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/success', [CheckoutController::class, 'success'])->name('success');
         Route::get('/pending', [CheckoutController::class, 'pending'])->name('pending');
         Route::get('/error', [CheckoutController::class, 'error'])->name('error');
+        // Route yang baru ditambahkan untuk menangani popup Midtrans yang ditutup
+        Route::post('/popup-closed', [CheckoutController::class, 'handlePopupClose'])->name('popup-closed');
     });
 
     Route::prefix('orders')->name('orders.')->group(function () {
@@ -146,9 +151,4 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-/*-------------------------------------------------------------------------
-| Payment Callback (excluded from CSRF protection)
-|------------------------------------------------------------------------*/
-Route::post('/midtrans-callback', [CheckoutController::class, 'midtransCallback'])
-    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])
-    ->name('midtrans.callback');
+

@@ -29,7 +29,17 @@ class OrderController extends Controller
             'cancelled' => Order::where('order_status', 'cancelled')->count(),
         ];
 
-        return view('admin.orders.index', compact('orders', 'statistics'));
+        // Status options for dropdown in order list
+        $statusOptions = [
+            'pending' => 'Pending',
+            'processing' => 'Processing',
+            'shipped' => 'Shipped',
+            'delivered' => 'Delivered',
+            'completed' => 'Completed',
+            'cancelled' => 'Cancelled'
+        ];
+
+        return view('partials.admin.orders', compact('orders', 'statistics', 'statusOptions'));
     }
 
     /**
@@ -69,31 +79,45 @@ class OrderController extends Controller
     }
 
     /**
-     * Update order status.
+     * Update order status - modified to work with AJAX for order list page.
      */
     public function updateStatus(Request $request, Order $order)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
-            'notes' => 'nullable|string|max:500'
+            'status' => 'required|in:pending,processing,shipped,delivered,completed,cancelled',
+            'notes' => 'nullable|string'
         ]);
 
-        DB::transaction(function () use ($order, $validated) {
+        try {
+            // Update status
             $order->update([
-                'order_status' => $validated['status'],
-                'status_notes' => $validated['notes'] ?? null
+                'order_status' => $request->status,
+                'status_notes' => $request->notes
             ]);
 
-            // Add to order history
-            $order->histories()->create([
-                'status' => $validated['status'],
-                'notes' => $validated['notes'] ?? 'Status updated by admin',
-                'user_id' => auth()->id()
-            ]);
-        });
+            // Check if request is AJAX (for order list page)
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Order status updated successfully',
+                    'new_status' => $request->status,
+                    'new_status_label' => ucfirst($request->status)
+                ]);
+            }
 
-        return redirect()->back()
-            ->with('success', 'Order status updated successfully');
+            // For non-AJAX requests (detail page)
+            return response()->json([
+                'success' => true,
+                'message' => 'Order status updated successfully',
+                'new_status' => $request->status
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update status: '.$e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -142,14 +166,12 @@ class OrderController extends Controller
     {
         $timeline = [];
 
-        // Order created
         $timeline[] = [
             'date' => $order->created_at,
             'event' => 'Order placed',
             'description' => 'Order #'.$order->order_number.' has been placed'
         ];
 
-        // Payment status changes
         if ($order->payment_status === 'paid') {
             $timeline[] = [
                 'date' => $order->updated_at,
@@ -158,7 +180,6 @@ class OrderController extends Controller
             ];
         }
 
-        // Add status histories
         foreach ($order->histories as $history) {
             $timeline[] = [
                 'date' => $history->created_at,
@@ -167,7 +188,6 @@ class OrderController extends Controller
             ];
         }
 
-        // Sort timeline by date
         usort($timeline, function ($a, $b) {
             return $a['date'] <=> $b['date'];
         });

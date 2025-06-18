@@ -57,7 +57,6 @@
                         <div class="row gy-3">
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'first_name' --}}
                                     <input id="first_name" type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" placeholder="Nama Depan" value="{{ old('first_name', $user->first_name ?? '') }}" required>
                                     <label for="first_name">Nama Depan*</label>
                                     <div class="invalid-feedback">Nama depan harus diisi.</div>
@@ -65,14 +64,12 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'last_name' --}}
                                     <input id="last_name" type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" placeholder="Nama Belakang" value="{{ old('last_name', $user->last_name ?? '') }}">
                                     <label for="last_name">Nama Belakang</label>
                                 </div>
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'email' --}}
                                     <input id="email" type="email" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="Email" value="{{ old('email', $user->email ?? '') }}" required>
                                     <label for="email">Email*</label>
                                     <div class="invalid-feedback">Email harus diisi dan valid.</div>
@@ -80,7 +77,6 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'phone' --}}
                                     <input id="phone" type="text" name="phone" class="form-control @error('phone') is-invalid @enderror" placeholder="Nomor Telepon" value="{{ old('phone', $user->phone_number ?? '') }}" required>
                                     <label for="phone">Nomor Telepon*</label>
                                     <div class="invalid-feedback">Nomor telepon harus diisi.</div>
@@ -88,7 +84,6 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'address_line1' --}}
                                     <input id="address_line1" type="text" name="address_line1" class="form-control @error('address_line1') is-invalid @enderror" placeholder="Alamat Baris 1" value="{{ old('address_line1', $user->address ?? '') }}" required>
                                     <label for="address_line1">Alamat Baris 1*</label>
                                     <div class="invalid-feedback">Alamat harus diisi.</div>
@@ -96,14 +91,12 @@
                             </div>
                             <div class="col-md-12">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'address_line2' --}}
                                     <input id="address_line2" type="text" name="address_line2" class="form-control @error('address_line2') is-invalid @enderror" placeholder="Alamat Baris 2 (Opsional)" value="{{ old('address_line2', '') }}">
                                     <label for="address_line2">Alamat Baris 2 (Opsional)</label>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'province' --}}
                                     <input id="province" type="text" name="province" class="form-control @error('province') is-invalid @enderror" placeholder="Provinsi" value="{{ old('province', $user->province->name ?? '') }}" required>
                                     <label for="province">Provinsi*</label>
                                     <div class="invalid-feedback">Provinsi harus diisi.</div>
@@ -111,7 +104,6 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'city' --}}
                                     <input id="city" type="text" name="city" class="form-control @error('city') is-invalid @enderror" placeholder="Kota" value="{{ old('city', $user->city->name ?? '') }}" required>
                                     <label for="city">Kota*</label>
                                     <div class="invalid-feedback">Kota harus diisi.</div>
@@ -119,7 +111,6 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating mb-4">
-                                    {{-- ID dan Name disesuaikan menjadi 'zip_code' --}}
                                     <input id="zip_code" type="text" name="zip_code" class="form-control @error('zip_code') is-invalid @enderror" placeholder="Kode Pos" value="{{ old('zip_code', $user->zip_code ?? '') }}" required>
                                     <label for="zip_code">Kode Pos*</label>
                                     <div class="invalid-feedback">Kode pos harus diisi.</div>
@@ -188,7 +179,6 @@
                             </tr>
                         </thead>
                         <tbody id="order-summary-items">
-                            {{-- Menggunakan $checkoutItems yang disiapkan di controller --}}
                             @forelse($checkoutItems as $item)
                             <tr>
                                 <td class="ps-0">
@@ -206,21 +196,18 @@
                             <tr>
                                 <td class="ps-0"><strong class="text-dark">Subtotal</strong></td>
                                 <td class="pe-0 text-end">
-                                    {{-- Pastikan $cartSubtotal selalu ada dari controller --}}
                                     <p class="price" id="order-subtotal">Rp. {{ number_format($cartSubtotal ?? 0, 0, ',', '.') }}</p>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="ps-0"><strong class="text-dark">Pengiriman</strong></td>
                                 <td class="pe-0 text-end">
-                                    {{-- Mengambil nilai default dari shipping_method yang dipilih jika ada --}}
                                     <p class="price" id="order-shipping">Rp. {{ number_format(old('shipping_method') == 'Pengiriman Ekspres' ? 10000 : 0, 0, ',', '.') }}</p>
                                 </td>
                             </tr>
                             <tr>
                                 <td class="ps-0"><strong class="text-dark">Total Akhir</strong></td>
                                 <td class="pe-0 text-end">
-                                    {{-- Menghitung total akhir berdasarkan subtotal dan biaya pengiriman yang dipilih --}}
                                     <p class="price text-dark fw-bold" id="order-grand-total">Rp. {{ number_format(($cartSubtotal ?? 0) + (old('shipping_method') == 'Pengiriman Ekspres' ? 10000 : 0), 0, ',', '.') }}</p>
                                 </td>
                             </tr>
@@ -234,17 +221,21 @@
 @endsection
 
 @push('scripts')
+{{-- Load Midtrans Snap JS --}}
 <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
 <script>
-jQuery(document).ready(function($) { // $ di sini akan merujuk ke jQuery
+document.addEventListener('DOMContentLoaded', function() {
     const checkoutForm = document.getElementById('checkout-form');
     const placeOrderButton = document.getElementById('place-order-button');
     const loadingIndicator = document.getElementById('loading-indicator');
     const btnText = placeOrderButton.querySelector('.btn-text');
     const btnLoading = placeOrderButton.querySelector('.btn-loading');
 
-    // Fungsi untuk menampilkan loading state
+    // Get CSRF token from Laravel
+    const csrfToken = document.querySelector('input[name="_token"]').value;
+
+    // --- Fungsi Helper ---
     function showLoading() {
         placeOrderButton.disabled = true;
         btnText.classList.add('d-none');
@@ -256,7 +247,6 @@ jQuery(document).ready(function($) { // $ di sini akan merujuk ke jQuery
         }
     }
 
-    // Fungsi untuk menyembunyikan loading state
     function hideLoading() {
         placeOrderButton.disabled = false;
         btnText.classList.remove('d-none');
@@ -264,23 +254,24 @@ jQuery(document).ready(function($) { // $ di sini akan merujuk ke jQuery
         loadingIndicator.style.display = 'none';
     }
 
-    // Fungsi untuk menampilkan error AJAX (alert di atas form)
     function showError(message) {
-        const existingAlert = document.querySelector('#alert-container .alert'); // Ubah selector
-        if (existingAlert) {
-            existingAlert.remove();
-        }
+        const alertContainer = document.getElementById('alert-container');
+        // Clear existing alerts to prevent duplicates
+        alertContainer.innerHTML = '';
 
-        const alertDiv = `<div class="alert alert-danger alert-dismissible fade show alert-checkout-error" role="alert">
-                            ${message}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>`;
-        document.getElementById('alert-container').insertAdjacentHTML('afterbegin', alertDiv); // Masukkan ke alert-container
-        document.getElementById('alert-container').scrollIntoView({ behavior: 'smooth', block: 'center' }); // Scroll ke alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger alert-dismissible fade show alert-checkout-error';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        alertContainer.appendChild(alertDiv);
+        alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Fungsi untuk menampilkan error validasi per field dari respons JSON
     function displayValidationErrors(errors) {
+        // Clear previous errors
         document.querySelectorAll('.is-invalid').forEach(el => {
             el.classList.remove('is-invalid');
         });
@@ -288,102 +279,169 @@ jQuery(document).ready(function($) { // $ di sini akan merujuk ke jQuery
             el.remove();
         });
 
+        let firstErrorField = null;
+
         for (const fieldName in errors) {
             let inputField = document.getElementById(fieldName) || document.querySelector(`[name="${fieldName}"]`);
 
             if (inputField) {
                 inputField.classList.add('is-invalid');
-                const errorMessage = errors[fieldName].join('<br>');
+                const errorMessage = Array.isArray(errors[fieldName]) ? errors[fieldName].join('<br>') : errors[fieldName];
                 const feedbackDiv = document.createElement('div');
                 feedbackDiv.className = 'invalid-feedback d-block';
                 feedbackDiv.innerHTML = errorMessage;
 
-                if (inputField.nextElementSibling && inputField.nextElementSibling.classList.contains('invalid-feedback')) {
-                    inputField.nextElementSibling.remove();
+                const existingFeedback = inputField.parentNode.querySelector('.invalid-feedback.d-block');
+                if (existingFeedback) {
+                    existingFeedback.remove();
                 }
+
                 inputField.parentNode.appendChild(feedbackDiv);
 
-                if (!document.querySelector('.is-invalid:focus')) {
-                    inputField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    inputField.focus();
+                if (!firstErrorField) {
+                    firstErrorField = inputField;
                 }
             }
         }
-        showError('Terjadi kesalahan validasi. Mohon perbaiki input Anda.'); // Tampilkan juga alert umum di atas
+
+        if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstErrorField.focus();
+        }
+
+        showError('Terjadi kesalahan validasi. Mohon perbaiki input Anda.');
     }
 
-    $('#checkout-form').on('submit', function(e) {
+    // --- Event Listener untuk Form Submission ---
+    checkoutForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        $('.is-invalid').removeClass('is-invalid');
-        $('.invalid-feedback.d-block').remove();
-        $('#alert-container').empty(); // Kosongkan alert container
-        $('.backend-validation-errors').hide();
+        // Clear previous errors and alerts
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback.d-block').forEach(el => el.remove());
+        document.getElementById('alert-container').innerHTML = ''; // Clear all alerts
 
+        const backendErrors = document.querySelector('.backend-validation-errors');
+        if (backendErrors) {
+            backendErrors.style.display = 'none';
+        }
+
+        // HTML5 validation check (client-side)
         if (!checkoutForm.checkValidity()) {
-            e.stopPropagation();
-            checkoutForm.classList.add('was-validated');
+            e.stopPropagation(); // Stop default form submission
+            checkoutForm.classList.add('was-validated'); // Show Bootstrap validation feedback
             const firstInvalidField = checkoutForm.querySelector(':invalid');
             if (firstInvalidField) {
                 firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstInvalidField.focus();
             }
-            showError('Mohon lengkapi semua field yang wajib diisi.'); // Notifikasi umum jika validasi HTML5 gagal
-            return;
+            showError('Mohon lengkapi semua field yang wajib diisi.');
+            return; // Stop execution if client-side validation fails
         }
 
         showLoading();
 
-        const formData = $(this).serialize();
+        const formData = new FormData(checkoutForm);
 
-        $.ajax({
-            method: "POST",
-            url: "{{ route('checkout.process')}}",
-            data: formData,
-            success: function(data) {
-                hideLoading();
-                console.log('AJAX Success:', data);
+        // Gunakan URL yang benar (pastikan ini sesuai dengan route Laravel Anda)
+        const processUrl = '/checkout/process'; // atau gunakan route helper Laravel
 
-                if (data.success && data.snap_token) {
-                    snap.pay(data.snap_token, {
-                        onSuccess: function(result) {
-                            console.log('Payment Success:', result);
-                            window.location.href = "{{ route('checkout.success') }}?order_id=" + data.order_id;
-                        },
-                        onPending: function(result) {
-                            console.log('Payment Pending:', result);
-                            window.location.href = "{{ route('checkout.pending') }}?order_id=" + data.order_id;
-                        },
-                        onError: function(result) {
-                            console.log('Payment Error:', result);
-                            showError('Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.');
-                        },
-                        onClose: function() {
-                            console.log('Payment popup closed');
-                            showError('Pembayaran dibatalkan atau ditutup oleh pengguna.');
-                        }
-                    });
-                } else if (data.errors) {
-                    displayValidationErrors(data.errors);
-                } else {
-                    showError(data.message || 'Terjadi kesalahan saat memproses pesanan. Silakan coba lagi.');
-                }
+        fetch(processUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
             },
-            error: function(jqXHR, textStatus, errorThrown) {
-                hideLoading();
-                console.error('AJAX Error:', textStatus, errorThrown, jqXHR);
-
-                if (jqXHR.responseJSON && jqXHR.responseJSON.errors) {
-                    displayValidationErrors(jqXHR.responseJSON.errors);
-                } else if (jqXHR.responseJSON && jqXHR.responseJSON.message) {
-                    showError(jqXHR.responseJSON.message);
-                } else {
-                    showError('Terjadi kesalahan jaringan atau server. Silakan coba lagi.');
+            body: formData
+        })
+        .then(async response => {
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+                const data = await response.json();
+                if (!response.ok) {
+                    throw { type: 'api', data: data, status: response.status };
                 }
+                return data;
+            } else {
+                const text = await response.text();
+                throw { type: 'server', message: `Server error: ${response.status} ${response.statusText}`, details: text };
+            }
+        })
+        .then(data => {
+            hideLoading();
+            console.log('AJAX Success:', data);
+
+            if (data.success && data.snap_token) {
+                window.snap.pay(data.snap_token, {
+                    onSuccess: function(result) {
+                        console.log('Payment Success:', result);
+                        window.location.href = "/checkout/success?order_id=" + data.order_id;
+                    },
+                    onPending: function(result) {
+                        console.log('Payment Pending:', result);
+                        window.location.href = "/checkout/pending?order_id=" + data.order_id;
+                    },
+                    onError: function(result) {
+                        console.log('Payment Error:', result);
+                        showError('Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.');
+                    },
+                    onClose: function() {
+                        console.log('Payment popup closed by user');
+                        showError('Pembayaran dibatalkan. Status pesanan Anda: Menunggu Pembayaran.');
+
+                        // Update status via AJAX
+                        fetch('/checkout/popup-closed', {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                order_id: data.order_id
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(updateData => {
+                            console.log('Status updated:', updateData);
+                            if (!updateData.success) {
+                                console.error('Failed to update status');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error updating status:', error);
+                        });
+                    }
+                });
+            } else if (data.errors) {
+                displayValidationErrors(data.errors);
+            } else {
+                showError(data.message || 'Terjadi kesalahan saat memproses pesanan. Silakan coba lagi.');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('AJAX Error:', error);
+
+            if (error.type === 'api') {
+                // Handle API errors (non-2xx responses with JSON)
+                if (error.data.errors) {
+                    displayValidationErrors(error.data.errors);
+                } else {
+                    showError(error.data.message || `Terjadi kesalahan (${error.status}). Silakan coba lagi.`);
+                }
+            } else if (error.type === 'server') {
+                // Handle server errors (non-JSON responses)
+                showError(`Terjadi kesalahan server. Silakan coba lagi atau hubungi admin.`);
+                console.error('Server Error Details:', error.details);
+            } else {
+                // Handle network errors or other exceptions
+                showError('Terjadi kesalahan jaringan. Silakan cek koneksi Anda dan coba lagi.');
             }
         });
     });
 
+    // --- Handling Shipping Method Change ---
     const shippingRadios = document.querySelectorAll('input[name="shipping_method"]');
     const orderSubtotalElement = document.getElementById('order-subtotal');
     const orderShippingElement = document.getElementById('order-shipping');
@@ -393,12 +451,12 @@ jQuery(document).ready(function($) { // $ di sini akan merujuk ke jQuery
         let selectedShippingCost = 0;
         shippingRadios.forEach(radio => {
             if (radio.checked) {
-                selectedShippingCost = parseFloat(radio.dataset.cost);
+                selectedShippingCost = parseFloat(radio.dataset.cost) || 0;
             }
         });
 
         const subtotalText = orderSubtotalElement.textContent.replace('Rp. ', '').replace(/\./g, '');
-        const currentSubtotal = parseFloat(subtotalText);
+        const currentSubtotal = parseFloat(subtotalText) || 0;
 
         const newGrandTotal = currentSubtotal + selectedShippingCost;
 
@@ -410,6 +468,7 @@ jQuery(document).ready(function($) { // $ di sini akan merujuk ke jQuery
         radio.addEventListener('change', updateOrderSummary);
     });
 
+    // Initialize order summary on page load
     updateOrderSummary();
 });
 </script>

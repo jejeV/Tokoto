@@ -106,7 +106,7 @@
             <tr>
               <td>
                 <div class="d-flex align-items-center">
-                  <img src="{{ $product->image ? asset('storage/'.$product->image) : asset('assets/admin/img/default-product.png') }}"
+                  <img src="{{ $product->image ? asset('assets/home/img/nike/'.$product->image) : asset('assets/home/img/nike/') }}"
                        alt="{{ $product->name }}" class="rounded me-3" width="50" height="50"
                        style="object-fit: cover;">
                   <div>
