@@ -11,8 +11,6 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AdminProductController;
 use App\Http\Controllers\Admin\OrderController;
-use App\Http\Controllers\Admin\AdminUserController; // Pastikan ini di-import jika digunakan
-use App\Http\Controllers\Admin\AdminSettingController; // Pastikan ini di-import jika digunakan
 
 /*-------------------------------------------------------------------------
 | Public Routes
@@ -100,35 +98,35 @@ Route::middleware('auth')->group(function () {
         | Order Management Routes (Updated)
         |------------------------------------------------------------------------*/
         Route::prefix('orders')->name('orders.')->group(function () {
-            Route::get('/', [OrderController::class, 'index'])->name('index');
-            Route::get('/{order}', [OrderController::class, 'show'])->name('show');
+        Route::get('/', [OrderController::class, 'index'])->name('index');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show');
 
-            // Status Management
-            Route::post('/{order}/status', [OrderController::class, 'updateStatus'])
-                ->name('updatestatus');
-            Route::post('/{order}/payment-status', [OrderController::class, 'updatePaymentStatus'])
-                ->name('update.payment-status');
+        // Status Management
+        Route::post('/{order}/status', [OrderController::class, 'updateStatus'])
+        ->name('updatestatus');
+        Route::post('/{order}/payment-status', [OrderController::class, 'updatePaymentStatus'])
+        ->name('update.payment-status');
 
-            // Export Functions
-            Route::get('/{order}/export/pdf', [OrderController::class, 'exportPdf'])
-                ->name('export.pdf');
-            Route::get('/export/excel', [OrderController::class, 'exportExcel'])
-                ->name('export.excel');
-        });
+        // Export Functions
+        Route::get('/{order}/invoice', [OrderController::class, 'generateInvoice'])
+        ->name('invoice');
+        Route::get('/export/excel', [OrderController::class, 'exportExcel'])
+        ->name('export.excel');
+    });
 
         /*-------------------------------------------------------------------------
         | Additional Admin Routes
         |------------------------------------------------------------------------*/
-        Route::prefix('users')->name('users.')->group(function () {
-            Route::get('/', [AdminUserController::class, 'index'])->name('index');
-            Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
-            Route::patch('/{user}/status', [AdminUserController::class, 'updateStatus'])->name('update.status');
-        });
+        // Route::prefix('users')->name('users.')->group(function () {
+        //     Route::get('/', [AdminUserController::class, 'index'])->name('index');
+        //     Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
+        //     Route::patch('/{user}/status', [AdminUserController::class, 'updateStatus'])->name('update.status');
+        // });
 
-        Route::prefix('settings')->name('settings.')->group(function () {
-            Route::get('/', [AdminSettingController::class, 'index'])->name('index');
-            Route::post('/', [AdminSettingController::class, 'store'])->name('store');
-        });
+        // Route::prefix('settings')->name('settings.')->group(function () {
+        //     Route::get('/', [AdminSettingController::class, 'index'])->name('index');
+        //     Route::post('/', [AdminSettingController::class, 'store'])->name('store');
+        // });
     });
 
 
@@ -141,7 +139,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/success', [CheckoutController::class, 'success'])->name('success');
         Route::get('/pending', [CheckoutController::class, 'pending'])->name('pending');
         Route::get('/error', [CheckoutController::class, 'error'])->name('error');
-        // Route yang baru ditambahkan untuk menangani popup Midtrans yang ditutup
         Route::post('/popup-closed', [CheckoutController::class, 'handlePopupClose'])->name('popup-closed');
     });
 

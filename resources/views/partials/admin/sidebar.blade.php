@@ -57,19 +57,19 @@
       </li>
 
       <!-- Pelanggan -->
-      <li class="menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+      {{-- <li class="menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
         <a href="{{ route('admin.users.index') }}" class="menu-link">
           <i class="menu-icon tf-icons bx bx-user"></i>
           <div>Pelanggan</div>
         </a>
-      </li>
+      </li> --}}
 
       <!-- Pengaturan -->
-      <li class="menu-item {{ request()->is('admin/settings*') ? 'active' : '' }}">
+      {{-- <li class="menu-item {{ request()->is('admin/settings*') ? 'active' : '' }}">
         <a href="{{ route('admin.settings.index') }}" class="menu-link">
           <i class="menu-icon tf-icons bx bx-cog"></i>
           <div>Pengaturan</div>
         </a>
-      </li>
+      </li> --}}
     </ul>
 </aside>

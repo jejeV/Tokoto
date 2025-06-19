@@ -64,7 +64,7 @@ class Order extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function orderItems()
@@ -99,6 +99,11 @@ class Order extends Model
 
     public function histories()
     {
-    return $this->hasMany(OrderHistory::class)->latest();
+        return $this->hasMany(OrderHistory::class)->latest();
+    }
+
+     public function items()
+    {
+        return $this->hasMany(OrderItem::class);
     }
 }

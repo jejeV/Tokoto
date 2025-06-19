@@ -8,7 +8,7 @@
   <!-- Content -->
   <div class="container-xxl flex-grow-1 container-p-y">
     <h4 class="fw-bold py-3 mb-4">
-      <span class="text-muted fw-light">eCommerce /</span> Orders
+      <span class="text-muted fw-light">Shobaru /</span> Orders
     </h4>
 
     <!-- Statistics Cards -->
@@ -118,7 +118,7 @@
                     <li><a class="dropdown-item" href="{{ route('admin.orders.show', $order->id) }}">
                       <i class="bx bx-show me-2"></i> View Details</a>
                     </li>
-                    <li><a class="dropdown-item" href="{{ route('admin.orders.export.pdf', $order->id) }}">
+                    <li><a class="dropdown-item" href="{{ route('admin.orders.invoice', $order->id) }}">
                       <i class="bx bx-download me-2"></i> Export PDF</a>
                     </li>
                     @if($order->order_status !== 'cancelled')
@@ -202,10 +202,8 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize modals
   const statusModal = new bootstrap.Modal('#statusModal');
 
-  // Status update button handler
   document.querySelectorAll('.status-update-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -226,7 +224,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Status form submission
   document.getElementById('statusForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 

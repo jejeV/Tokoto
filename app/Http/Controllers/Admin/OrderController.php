@@ -139,25 +139,92 @@ class OrderController extends Controller
             ->with('success', 'Payment status updated successfully');
     }
 
-    /**
-     * Export orders to PDF.
-     */
-    public function exportPdf(Order $order)
-    {
-        $order->load(['customer', 'orderItems.product']);
+     public function generateInvoice($orderId)
+{
+    try {
+        $order = Order::with(['items'])->findOrFail($orderId);
 
-        $pdf = PDF::loadView('admin.orders.export', compact('order'));
+        if ($order->items->isEmpty()) {
+            throw new \Exception("Order contains no items");
+        }
 
-        return $pdf->download("order-{$order->order_number}.pdf");
+        // Prepare addresses
+        $billingAddress = implode(', ', array_filter([
+            $order->billing_address_line_1,
+            $order->billing_address_line_2,
+            $order->billing_zip_code
+        ]));
+
+        $shippingAddress = implode(', ', array_filter([
+            $order->shipping_address_line_1,
+            $order->shipping_address_line_2,
+            $order->shipping_zip_code
+        ]));
+
+        // Format items according to your DB structure
+        $formattedItems = $order->items->map(function($item) {
+            return [
+                'product_name' => $item->product_name,
+                'variant' => $item->selected_color.'/Size '.$item->selected_size,
+                'quantity' => $item->quantity,
+                'price' => $item->price_per_item,
+                'total' => $item->total_price
+            ];
+        });
+
+        $data = [
+            'invoiceNo' => $order->order_number,
+            'invoiceDate' => $order->created_at->format('M jS, Y'),
+            'dueDate' => $order->created_at->addDays(30)->format('M jS, Y'),
+            'from' => [
+                'company' => 'Shoebaru',
+                'name' => 'Shoebaru',
+                'email' => 'shoebaru@gmail.com',
+                'phone' => '+6281819919',
+                'website' => 'shobaru.com',
+                'address' => 'Jln Pinang 9A, Depok Jawa Barat'
+            ],
+            'billTo' => [
+                'name' => $order->billing_first_name.' '.$order->billing_last_name,
+                'email' => $order->billing_email ?? 'N/A',
+                'phone' => $order->billing_phone,
+                'address' => $billingAddress ?: 'Address not specified'
+            ],
+            'shipTo' => [
+                'name' => $order->shipping_first_name.' '.$order->shipping_last_name,
+                'phone' => $order->shipping_phone_number,
+                'address' => $shippingAddress ?: $billingAddress
+            ],
+            'trackingNo' => 'ROB'.str_pad($order->id, 8, '0', STR_PAD_LEFT),
+            'items' => $formattedItems,
+            'subtotal' => $order->subtotal_amount,
+            'discount' => $order->discount_amount,
+            'shipping' => $order->shipping_cost,
+            'total' => $order->total_amount,
+            'paymentMethod' => $order->payment_method,
+            'paymentStatus' => $order->payment_status,
+            'notes' => 'Thank you for your business!'
+        ];
+
+        if (!view()->exists('partials.admin.invoice')) {
+            throw new \Exception("Invoice template not found");
+        }
+
+        return PDF::loadView('partials.admin.invoice', $data)
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true
+            ])
+            ->download('invoice-'.$order->order_number.'.pdf');
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Invoice generation failed',
+            'message' => $e->getMessage()
+        ], 500);
     }
-
-    /**
-     * Export orders to Excel.
-     */
-    public function exportExcel()
-    {
-        return Excel::download(new OrdersExport, 'orders.xlsx');
-    }
+}
 
     /**
      * Generate order timeline.
