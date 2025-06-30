@@ -11,7 +11,6 @@
       <span class="text-muted fw-light">Products /</span> Management
     </h4>
 
-    <!-- Success/Error Messages -->
     @if(session('success'))
       <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ session('success') }}
@@ -169,122 +168,128 @@
         </table>
       </div>
       @if($products->hasPages())
-        <div class="card-footer">
-          {{ $products->links() }}
+        <div class="card-footer d-flex justify-content-between align-items-center">
+          <div class="text-muted">
+            Showing <span class="fw-semibold">{{ $products->firstItem() }}</span> to <span class="fw-semibold">{{ $products->lastItem() }}</span> of <span class="fw-semibold">{{ $products->total() }}</span> entries
+          </div>
+          <div class="pagination">
+            {{ $products->links('pagination::bootstrap-4') }}
+          </div>
         </div>
       @endif
     </div>
   </div>
 </div>
 
+<!-- Product Modal -->
 <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="modalTitle">Add New Product</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <form id="productForm" enctype="multipart/form-data">
-            @csrf
-            <input type="hidden" id="product_id" name="id">
-            <input type="hidden" id="form_method" name="_method" value="">
-
-            <div class="modal-body">
-              <!-- Error container -->
-              <div id="errorContainer" class="alert alert-danger d-none"></div>
-
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Product Name *</label>
-                  <input type="text" class="form-control" id="name" name="name" required>
-                  <div class="invalid-feedback"></div>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Base Price *</label>
-                  <input type="number" step="0.01" class="form-control" id="price" name="price" required>
-                  <div class="invalid-feedback"></div>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Description</label>
-                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Product Image</label>
-                <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                <div class="form-text">Max size: 2MB. Formats: JPEG, PNG, JPG, GIF, SVG</div>
-                <div class="form-check mt-2 d-none" id="removeImageContainer">
-                  <input class="form-check-input" type="checkbox" id="remove_image" name="remove_image" value="1">
-                  <label class="form-check-label" for="remove_image">
-                    Remove current image
-                  </label>
-                </div>
-                <div id="imagePreview" class="mt-2"></div>
-              </div>
-
-              <hr class="my-4">
-
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5>Product Variants</h5>
-                <button type="button" class="btn btn-sm btn-primary" id="addVariantBtn">
-                  <i class="bx bx-plus me-1"></i> Add Variant
-                </button>
-              </div>
-
-              <div id="variantsContainer">
-                <!-- Variants will be added here dynamically -->
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-primary" id="submitBtn">Save Product</button>
-            </div>
-          </form>
-        </div>
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle">Add New Product</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-    </div>
+      <form id="productForm" enctype="multipart/form-data">
+        @csrf
+        <input type="hidden" id="product_id" name="id">
+        <input type="hidden" id="form_method" name="_method" value="">
 
-    <!-- Variant Template -->
-    <div id="variantTemplate" class="d-none">
-      <div class="variant-row mb-3 border p-3 rounded bg-light">
-        <div class="row g-3">
-          <div class="col-md-3">
-            <label class="form-label">Size</label>
-            <select class="form-select variant-size" name="variants[INDEX][size_id]">
-              <option value="">Select Size</option>
-              @foreach($sizes as $size)
-                <option value="{{ $size->id }}">{{ $size->name }}</option>
-              @endforeach
-            </select>
+        <div class="modal-body">
+          <!-- Error container -->
+          <div id="errorContainer" class="alert alert-danger d-none"></div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Product Name *</label>
+              <input type="text" class="form-control" id="name" name="name" required>
+              <div class="invalid-feedback"></div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Base Price *</label>
+              <input type="number" step="0.01" class="form-control" id="price" name="price" required>
+              <div class="invalid-feedback"></div>
+            </div>
           </div>
-          <div class="col-md-3">
-            <label class="form-label">Color</label>
-            <select class="form-select variant-color" name="variants[INDEX][color_id]">
-              <option value="">Select Color</option>
-              @foreach($colors as $color)
-                <option value="{{ $color->id }}">{{ $color->name }}</option>
-              @endforeach
-            </select>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Price *</label>
-            <input type="number" step="0.01" class="form-control variant-price" name="variants[INDEX][price]" required>
+
+          <div class="mb-3">
+            <label class="form-label">Product Image</label>
+            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+            <div class="form-text">Max size: 2MB. Formats: JPEG, PNG, JPG, GIF, SVG</div>
+            <div class="form-check mt-2 d-none" id="removeImageContainer">
+              <input class="form-check-input" type="checkbox" id="remove_image" name="remove_image" value="1">
+              <label class="form-check-label" for="remove_image">
+                Remove current image
+              </label>
+            </div>
+            <div id="imagePreview" class="mt-2"></div>
           </div>
-          <div class="col-md-2">
-            <label class="form-label">Stock *</label>
-            <input type="number" class="form-control variant-stock" name="variants[INDEX][stock]" required min="0">
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="button" class="btn btn-sm btn-danger remove-variant w-100">
-              <i class="bx bx-trash"></i> Remove
+
+          <hr class="my-4">
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Product Variants</h5>
+            <button type="button" class="btn btn-sm btn-primary" id="addVariantBtn">
+              <i class="bx bx-plus me-1"></i> Add Variant
             </button>
           </div>
-          <input type="hidden" name="variants[INDEX][id]" class="variant-id" value="">
+
+          <div id="variantsContainer">
+            <!-- Variants will be added here dynamically -->
+          </div>
         </div>
-      </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">Save Product</button>
+        </div>
+      </form>
     </div>
+  </div>
+</div>
+
+<!-- Variant Template -->
+<div id="variantTemplate" class="d-none">
+  <div class="variant-row mb-3 border p-3 rounded bg-light">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Size</label>
+        <select class="form-select variant-size" name="variants[INDEX][size_id]">
+          <option value="">Select Size</option>
+          @foreach($sizes as $size)
+            <option value="{{ $size->id }}">{{ $size->name }}</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Color</label>
+        <select class="form-select variant-color" name="variants[INDEX][color_id]">
+          <option value="">Select Color</option>
+          @foreach($colors as $color)
+            <option value="{{ $color->id }}">{{ $color->name }}</option>
+          @endforeach
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Price *</label>
+        <input type="number" step="0.01" class="form-control variant-price" name="variants[INDEX][price]" required>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Stock *</label>
+        <input type="number" class="form-control variant-stock" name="variants[INDEX][stock]" required min="0">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="button" class="btn btn-sm btn-danger remove-variant w-100">
+          <i class="bx bx-trash"></i> Remove
+        </button>
+      </div>
+      <input type="hidden" name="variants[INDEX][id]" class="variant-id" value="">
+    </div>
+  </div>
+</div>
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
@@ -306,6 +311,27 @@
 </div>
 
 @endsection
+
+@push('styles')
+<style>
+.pagination {
+    margin: 0;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #696cff;
+    border-color: #696cff;
+}
+
+.pagination .page-link {
+    color: #696cff;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #b4b7bd;
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -599,7 +625,6 @@ $(document).ready(function() {
         showError('Please fix the following errors:<br>• ' + errorMessages.join('<br>• '));
     }
 
-    // Handle image preview
     $('#image').change(function() {
         var file = this.files[0];
         if (file) {
@@ -616,7 +641,6 @@ $(document).ready(function() {
         }
     });
 
-    // Handle modal cleanup
     $('#productModal').on('hidden.bs.modal', function () {
         resetForm();
     });

@@ -47,12 +47,6 @@
               <div>Daftar Pesanan</div>
             </a>
           </li>
-          <!-- Jika punya route untuk export/laporan -->
-          <li class="menu-item {{ request()->is('admin/orders/export*') ? 'active' : '' }}">
-            <a href="{{ route('admin.orders.export.excel') }}" class="menu-link">
-              <div>Export Excel</div>
-            </a>
-          </li>
         </ul>
       </li>
 

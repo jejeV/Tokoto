@@ -34,6 +34,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="{{ asset('assets/home/js/plugins.js') }}"></script>
   <script src="{{ asset('assets/home/js/theme.js') }}"></script>
+  <!-- Vendors JS -->
+  <script src="{{ asset('assets/vendor/libs/apex-charts/apexcharts.js') }}"></script>
+  <!-- Page JS -->
+  <script src="{{ asset('assets/js/pages/admin-dashboard.js') }}"></script>
   @stack('scripts')
 </body>
 

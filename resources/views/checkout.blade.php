@@ -24,7 +24,6 @@
                 @endif
 
                 {{-- Error validasi dari backend Laravel (untuk kasus non-AJAX atau fallback) --}}
-                {{-- Saat menggunakan AJAX, ini akan disembunyikan oleh JavaScript --}}
                 @if ($errors->any())
                     <div class="alert alert-danger alert-dismissible fade show backend-validation-errors" role="alert">
                         Terjadi kesalahan validasi. Mohon periksa kembali input Anda.
@@ -221,7 +220,9 @@
 @endsection
 
 @push('scripts')
-{{-- Load Midtrans Snap JS --}}
+{{-- Pastikan Font Awesome CSS dimuat di layout utama Anda atau tambahkan di sini --}}
+{{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" xintegrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" /> --}}
+
 <script type="text/javascript" src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 
 <script>
@@ -232,7 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const btnText = placeOrderButton.querySelector('.btn-text');
     const btnLoading = placeOrderButton.querySelector('.btn-loading');
 
-    // Get CSRF token from Laravel
     const csrfToken = document.querySelector('input[name="_token"]').value;
 
     // --- Fungsi Helper ---
@@ -269,6 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
         alertContainer.appendChild(alertDiv);
         alertContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+
+    // Fungsi showSuccessAlert (yang sebelumnya menampilkan alert) kini dihapus total karena kita akan redirect
 
     function displayValidationErrors(errors) {
         // Clear previous errors
@@ -342,17 +344,19 @@ document.addEventListener('DOMContentLoaded', function() {
         showLoading();
 
         const formData = new FormData(checkoutForm);
+        const formDataObject = {};
+        formData.forEach((value, key) => { formDataObject[key] = value; });
 
-        // Gunakan URL yang benar (pastikan ini sesuai dengan route Laravel Anda)
-        const processUrl = '/checkout/process'; // atau gunakan route helper Laravel
+        const processUrl = '{{ route('checkout.process') }}';
 
         fetch(processUrl, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': csrfToken,
+                'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            body: formData
+            body: JSON.stringify(formDataObject)
         })
         .then(async response => {
             const contentType = response.headers.get("content-type");
@@ -369,107 +373,107 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             hideLoading();
-            console.log('AJAX Success:', data);
+            console.log('AJAX Success (Snap Token Generated):', data);
 
             if (data.success && data.snap_token) {
+                // Panggil Midtrans Snap
                 window.snap.pay(data.snap_token, {
                     onSuccess: function(result) {
-                        console.log('Payment Success:', result);
-                        window.location.href = "/checkout/success?order_id=" + data.order_id;
+                        console.log('Payment Success (Midtrans Callback):', result);
+                        sendSnapCallbackDataToBackend('{{ route('checkout.midtrans_success') }}', {
+                            order_id: data.order_id,
+                            transaction_status: result.transaction_status,
+                            transaction_id: result.transaction_id,
+                            gross_amount: result.gross_amount,
+                            payment_type: result.payment_type,
+                            status_code: result.status_code
+                        }, 'success');
                     },
                     onPending: function(result) {
-                        console.log('Payment Pending:', result);
-                        window.location.href = "/checkout/pending?order_id=" + data.order_id;
+                        console.log('Payment Pending (Midtrans Callback):', result);
+                        sendSnapCallbackDataToBackend('{{ route('checkout.midtrans_pending') }}', {
+                            order_id: data.order_id,
+                            transaction_status: result.transaction_status,
+                            transaction_id: result.transaction_id,
+                            gross_amount: result.gross_amount,
+                            payment_type: result.payment_type,
+                            status_code: result.status_code
+                        }, 'pending');
                     },
                     onError: function(result) {
-                        console.log('Payment Error:', result);
-                        showError('Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.');
+                        console.error('Payment Error (Midtrans Callback):', result);
+                        sendSnapCallbackDataToBackend('{{ route('checkout.midtrans_error') }}', {
+                            order_id: data.order_id,
+                            transaction_status: result.transaction_status,
+                            transaction_id: result.transaction_id,
+                            gross_amount: result.gross_amount,
+                            payment_type: result.payment_type,
+                            status_code: result.status_code
+                        }, 'error');
                     },
                     onClose: function() {
-                        console.log('Payment popup closed by user');
-                        showError('Pembayaran dibatalkan. Status pesanan Anda: Menunggu Pembayaran.');
-
-                        // Update status via AJAX
-                        fetch('/checkout/popup-closed', {
-                            method: 'POST',
-                            headers: {
-                                'X-CSRF-TOKEN': csrfToken,
-                                'Content-Type': 'application/json',
-                                'Accept': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                order_id: data.order_id
-                            })
-                        })
-                        .then(response => response.json())
-                        .then(updateData => {
-                            console.log('Status updated:', updateData);
-                            if (!updateData.success) {
-                                console.error('Failed to update status');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error updating status:', error);
-                        });
+                        console.log('Midtrans popup closed by user.');
+                        // Ketika popup ditutup, asumsikan status pending/unpaid dan redirect ke halaman pending
+                        window.location.href = `{{ route('checkout.pending') }}?order_id=${data.order_id}`;
                     }
                 });
-            } else if (data.errors) {
-                displayValidationErrors(data.errors);
             } else {
-                showError(data.message || 'Terjadi kesalahan saat memproses pesanan. Silakan coba lagi.');
+                showError(data.message || JSON.stringify(data.errors) || 'Gagal menghasilkan token pembayaran.');
             }
         })
         .catch(error => {
             hideLoading();
-            console.error('AJAX Error:', error);
-
-            if (error.type === 'api') {
-                // Handle API errors (non-2xx responses with JSON)
-                if (error.data.errors) {
-                    displayValidationErrors(error.data.errors);
-                } else {
-                    showError(error.data.message || `Terjadi kesalahan (${error.status}). Silakan coba lagi.`);
-                }
-            } else if (error.type === 'server') {
-                // Handle server errors (non-JSON responses)
-                showError(`Terjadi kesalahan server. Silakan coba lagi atau hubungi admin.`);
-                console.error('Server Error Details:', error.details);
+            console.error('Fetch error during checkout process:', error);
+            if (error.type === 'api' && error.data && error.data.errors) {
+                displayValidationErrors(error.data.errors);
+            } else if (error.type === 'api') {
+                showError(error.data.message || 'Terjadi kesalahan saat memproses pesanan.');
             } else {
-                // Handle network errors or other exceptions
-                showError('Terjadi kesalahan jaringan. Silakan cek koneksi Anda dan coba lagi.');
+                showError(error.message || 'Terjadi kesalahan jaringan atau server. Silakan coba lagi.');
             }
         });
     });
 
-    // --- Handling Shipping Method Change ---
-    const shippingRadios = document.querySelectorAll('input[name="shipping_method"]');
-    const orderSubtotalElement = document.getElementById('order-subtotal');
-    const orderShippingElement = document.getElementById('order-shipping');
-    const orderGrandTotalElement = document.getElementById('order-grand-total');
+    /**
+     * Fungsi helper untuk mengirim data callback Snap JS ke backend.
+     * Setelah backend berhasil mengupdate status, akan REDIRECT ke halaman status yang sesuai.
+     * @param {string} url - URL endpoint backend.
+     * @param {object} data - Data transaksi yang akan dikirim (disederhanakan).
+     * @param {string} statusType - Tipe status (e.g., 'success', 'pending', 'error').
+     */
+    async function sendSnapCallbackDataToBackend(url, data, statusType) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(data)
+            });
 
-    function updateOrderSummary() {
-        let selectedShippingCost = 0;
-        shippingRadios.forEach(radio => {
-            if (radio.checked) {
-                selectedShippingCost = parseFloat(radio.dataset.cost) || 0;
+            const result = await response.json();
+
+            if (result.success) {
+                console.log(`Backend update for ${statusType} successful.`);
+                if (statusType === 'success') {
+                    window.location.href = `{{ route('checkout.success') }}?order_id=${data.order_id}`;
+                } else if (statusType === 'pending') {
+                    window.location.href = `{{ route('checkout.pending') }}?order_id=${data.order_id}`;
+                } else if (statusType === 'error') {
+                    // Jika backend merespons sukses untuk error callback, tetap redirect ke halaman error
+                    window.location.href = `{{ route('checkout.error') }}?order_id=${data.order_id}&message=${encodeURIComponent(result.message || 'Terjadi kesalahan saat pembayaran.')}`;
+                }
+            } else {
+                console.error(`Failed to update backend for ${statusType}:`, result.message);
+                // Jika backend gagal mengupdate status, redirect ke halaman error dengan pesan
+                window.location.href = `{{ route('checkout.error') }}?order_id=${data.order_id}&message=${encodeURIComponent(result.message || `Terjadi kesalahan saat memperbarui status pesanan (${statusType}).`)}`;
             }
-        });
-
-        const subtotalText = orderSubtotalElement.textContent.replace('Rp. ', '').replace(/\./g, '');
-        const currentSubtotal = parseFloat(subtotalText) || 0;
-
-        const newGrandTotal = currentSubtotal + selectedShippingCost;
-
-        orderShippingElement.textContent = 'Rp. ' + new Intl.NumberFormat('id-ID').format(selectedShippingCost);
-        orderGrandTotalElement.textContent = 'Rp. ' + new Intl.NumberFormat('id-ID').format(newGrandTotal);
+        } catch (error) {
+            console.error(`Error sending ${statusType} data to backend:`, error);
+            // Jika ada kesalahan komunikasi (jaringan, parsing), redirect ke halaman error generik
+            window.location.href = `{{ route('checkout.error') }}?order_id=${data.order_id}&message=${encodeURIComponent('Terjadi kesalahan komunikasi dengan server. Silakan coba lagi.')}`;
+        }
     }
-
-    shippingRadios.forEach(radio => {
-        radio.addEventListener('change', updateOrderSummary);
-    });
-
-    // Initialize order summary on page load
-    updateOrderSummary();
 });
 </script>
-@endpush

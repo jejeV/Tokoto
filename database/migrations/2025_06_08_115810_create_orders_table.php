@@ -34,6 +34,7 @@ return new class extends Migration
             $table->string('midtrans_bank')->nullable();
             $table->json('midtrans_va_numbers')->nullable();
             $table->string('payment_redirect_url')->nullable();
+            $table->string('midtrans_status_code')->nullable()->comment('HTTP status code from Midtrans (e.g., 200, 201, 202)');
 
             $table->string('billing_first_name');
             $table->string('billing_last_name');
